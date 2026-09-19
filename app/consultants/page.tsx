@@ -21,31 +21,71 @@ interface Consultant {
   notes: string | null
 }
 
+interface ContactLog {
+  id: number
+  consultant_id: number
+  contact_date: string
+  contact_type: string | null
+  memo: string | null
+}
+
+interface LatestContact {
+  date: string
+  type: string | null
+}
+
 export default function ConsultantsPage() {
   const [consultants, setConsultants] = useState<Consultant[]>([])
+  const [latestContacts, setLatestContacts] = useState<Record<number, LatestContact>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
 
   useEffect(() => {
-    fetchConsultants()
+    fetchAll()
   }, [])
 
-  async function fetchConsultants() {
+  async function fetchAll() {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // 相談者
+      const { data: consultantsData, error: e1 } = await supabase
         .from('consultants')
         .select('*')
         .order('received_date', { ascending: false })
         .order('id', { ascending: false })
 
-      if (error) {
-        setError(error.message)
-      } else {
-        setConsultants(data ?? [])
+      if (e1) {
+        setError(e1.message)
+        return
       }
+
+      // 対応履歴(全件、日付降順)
+      const { data: logsData, error: e2 } = await supabase
+        .from('contact_logs')
+        .select('*')
+        .order('contact_date', { ascending: false })
+        .order('id', { ascending: false })
+
+      if (e2) {
+        setError(e2.message)
+        return
+      }
+
+      // 各相談者の最新対応履歴を抽出
+      const latest: Record<number, LatestContact> = {}
+      ;(logsData ?? []).forEach((log: ContactLog) => {
+        if (!latest[log.consultant_id]) {
+          latest[log.consultant_id] = {
+            date: log.contact_date,
+            type: log.contact_type,
+          }
+        }
+      })
+
+      setConsultants(consultantsData ?? [])
+      setLatestContacts(latest)
     } catch (e) {
       setError(`予期せぬエラー: ${e}`)
     } finally {
@@ -73,6 +113,15 @@ export default function ConsultantsPage() {
     入寮済: 'bg-green-100 text-green-700',
     辞退: 'bg-gray-100 text-gray-500',
     対応終了: 'bg-gray-100 text-gray-500',
+  }
+
+  const contactTypeColors: Record<string, string> = {
+    LINE: 'bg-green-100 text-green-700',
+    電話: 'bg-orange-100 text-orange-700',
+    オンライン面談: 'bg-blue-100 text-blue-700',
+    対面面談: 'bg-indigo-100 text-indigo-700',
+    辞退: 'bg-gray-100 text-gray-500',
+    連絡待ち: 'bg-yellow-100 text-yellow-700',
   }
 
   return (
@@ -147,57 +196,83 @@ export default function ConsultantsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((c) => (
-              <Link
-                key={c.id}
-                href={`/consultants/${c.id}`}
-                className="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {c.guardian_name || '(保護者名未登録)'}
-                      {c.name && (
-                        <span className="text-gray-500 font-normal ml-2">
-                          / {c.name}
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">
-                      受付: {c.received_date}
-                    </p>
+            {filtered.map((c) => {
+              const latest = latestContacts[c.id]
+              return (
+                <Link
+                  key={c.id}
+                  href={`/consultants/${c.id}`}
+                  className="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        {c.guardian_name || '(保護者名未登録)'}
+                        {c.name && (
+                          <span className="text-gray-500 font-normal ml-2">
+                            / {c.name}
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        受付: {c.received_date}
+                      </p>
+                    </div>
+                    {c.status && (
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          statusColors[c.status] || 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {c.status}
+                      </span>
+                    )}
                   </div>
-                  {c.status && (
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        statusColors[c.status] || 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                  )}
-                </div>
 
-                <div className="flex flex-wrap gap-2 text-xs text-gray-600 mt-3">
-                  {c.grade && <Tag>📚 {c.grade}</Tag>}
-                  {c.prefecture && <Tag>🗾 {c.prefecture}</Tag>}
-                  {c.inquiry_route && <Tag>📢 {c.inquiry_route}</Tag>}
-                  {c.inquiry_channel && (
-                    <Tag>
-                      📱 {c.inquiry_channel}
-                      {c.inquiry_channel === 'LINE' && c.line_name && ` (${c.line_name})`}
-                    </Tag>
-                  )}
-                  {c.phone && <Tag>📞 {c.phone}</Tag>}
-                </div>
+                  {/* 最新対応 */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    {latest ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500">🕒 最新:</span>
+                        <span className="font-medium text-gray-900">
+                          {latest.date}
+                        </span>
+                        {latest.type && (
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              contactTypeColors[latest.type] || 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {latest.type}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400">🕒 まだ対応履歴がありません</p>
+                    )}
+                  </div>
 
-                {c.notes && (
-                  <p className="mt-3 text-sm text-gray-600 bg-gray-50 rounded p-2">
-                    📝 {c.notes}
-                  </p>
-                )}
-              </Link>
-            ))}
+                  <div className="flex flex-wrap gap-2 text-xs text-gray-600 mt-3">
+                    {c.grade && <Tag>📚 {c.grade}</Tag>}
+                    {c.prefecture && <Tag>🗾 {c.prefecture}</Tag>}
+                    {c.inquiry_route && <Tag>📢 {c.inquiry_route}</Tag>}
+                    {c.inquiry_channel && (
+                      <Tag>
+                        📱 {c.inquiry_channel}
+                        {c.inquiry_channel === 'LINE' && c.line_name && ` (${c.line_name})`}
+                      </Tag>
+                    )}
+                    {c.phone && <Tag>📞 {c.phone}</Tag>}
+                  </div>
+
+                  {c.notes && (
+                    <p className="mt-3 text-sm text-gray-600 bg-gray-50 rounded p-2">
+                      📝 {c.notes}
+                    </p>
+                  )}
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>
