@@ -20,6 +20,8 @@ export default function NewConsultantPage() {
     phone: '',
     prefecture: '',
     inquiry_route: '',
+    inquiry_channel: '',
+    line_name: '',
     status: '対応中',
     notes: '',
   })
@@ -36,7 +38,6 @@ export default function NewConsultantPage() {
     setError(null)
 
     try {
-      // 空文字を null に変換(データベース側でNULLとして扱われる)
       const payload = Object.fromEntries(
         Object.entries(form).map(([k, v]) => [k, v === '' ? null : v])
       )
@@ -51,7 +52,6 @@ export default function NewConsultantPage() {
         return
       }
 
-      // 保存成功!ホーム画面に戻る
       router.push('/')
       router.refresh()
     } catch (e) {
@@ -65,19 +65,13 @@ export default function NewConsultantPage() {
       {/* ヘッダー */}
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-gray-500 hover:text-gray-700 text-sm"
-          >
+          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
             ← ホーム
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">
-            新規問い合わせ登録
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">新規問い合わせ登録</h1>
         </div>
       </header>
 
-      {/* フォーム */}
       <form
         onSubmit={handleSubmit}
         className="max-w-2xl mx-auto px-4 py-8 space-y-6"
@@ -100,7 +94,7 @@ export default function NewConsultantPage() {
           />
         </Field>
 
-                {/* 保護者氏名 */}
+        {/* 保護者氏名 */}
         <Field label="👨‍👩‍👧 保護者氏名" required>
           <input
             type="text"
@@ -208,8 +202,8 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-        {/* 問い合わせ経路 */}
-        <Field label="📢 問い合わせ経路">
+        {/* どこで知ったか */}
+        <Field label="📢 どこで知ったか">
           <select
             name="inquiry_route"
             value={form.inquiry_route}
@@ -223,6 +217,36 @@ export default function NewConsultantPage() {
             <option value="その他">その他</option>
           </select>
         </Field>
+
+        {/* 連絡手段 */}
+        <Field label="📱 どの手段で連絡が来たか">
+          <select
+            name="inquiry_channel"
+            value={form.inquiry_channel}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">選択してください</option>
+            <option value="LINE">LINE</option>
+            <option value="電話">電話</option>
+            <option value="メール">メール</option>
+            <option value="その他">その他</option>
+          </select>
+        </Field>
+
+        {/* LINE名(LINEを選んだ時だけ表示) */}
+        {form.inquiry_channel === 'LINE' && (
+          <Field label="💬 LINE名">
+            <input
+              type="text"
+              name="line_name"
+              value={form.line_name}
+              onChange={handleChange}
+              placeholder="LINEでの表示名"
+              className="input"
+            />
+          </Field>
+        )}
 
         {/* ステータス */}
         <Field label="📊 ステータス">
@@ -241,7 +265,7 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-                {/* 備考 */}
+        {/* 備考 */}
         <Field label="📝 備考">
           <textarea
             name="notes"
@@ -253,7 +277,6 @@ export default function NewConsultantPage() {
           />
         </Field>
 
-        {/* ボタン */}
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
@@ -290,7 +313,6 @@ export default function NewConsultantPage() {
   )
 }
 
-// フィールドコンポーネント
 function Field({
   label,
   required,
