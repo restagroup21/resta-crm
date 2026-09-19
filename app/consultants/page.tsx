@@ -53,7 +53,6 @@ export default function ConsultantsPage() {
     }
   }
 
-  // フィルタリング
   const filtered = consultants.filter((c) => {
     const searchLower = search.toLowerCase()
     const matchesSearch =
@@ -78,7 +77,6 @@ export default function ConsultantsPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
-      {/* ヘッダー */}
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center gap-4">
           <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
@@ -89,7 +87,6 @@ export default function ConsultantsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* 検索・フィルター */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-3">
           <div>
             <input
@@ -123,7 +120,6 @@ export default function ConsultantsPage() {
           </div>
         </div>
 
-        {/* 件数と新規登録ボタン */}
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-600">
             📊 <span className="font-semibold">{filtered.length}</span>件
@@ -137,7 +133,6 @@ export default function ConsultantsPage() {
           </Link>
         </div>
 
-        {/* 一覧 */}
         {loading ? (
           <div className="text-center py-12 text-gray-500">読み込み中...</div>
         ) : error ? (
@@ -153,9 +148,10 @@ export default function ConsultantsPage() {
         ) : (
           <div className="space-y-3">
             {filtered.map((c) => (
-              <div
+              <Link
                 key={c.id}
-                className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
+                href={`/consultants/${c.id}`}
+                className="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -200,7 +196,7 @@ export default function ConsultantsPage() {
                     📝 {c.notes}
                   </p>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         )}
