@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import VoiceInput from '@/app/components/VoiceInput'
 
 export default function NewConsultantPage() {
   const router = useRouter()
@@ -242,14 +241,15 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-                {/* 備考(音声入力対応) */}
-        <Field label="📝 備考(🎤ボタンで音声入力可)">
-          <VoiceInput
+                {/* 備考 */}
+        <Field label="📝 備考">
+          <textarea
             name="notes"
             value={form.notes}
-            onChange={(v) => setForm({ ...form, notes: v })}
-            placeholder="自由に記入 / 🎤ボタンで音声入力"
+            onChange={handleChange}
             rows={4}
+            placeholder="自由に記入"
+            className="input"
           />
         </Field>
 
