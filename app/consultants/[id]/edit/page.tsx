@@ -158,7 +158,7 @@ export default function EditConsultantPage() {
         <Field label="📚 学年">
           <select name="grade" value={form.grade} onChange={handleChange} className="input">
             <option value="">選択してください</option>
-            {['小1','小2','小3','小4','小5','小6','中1','中2','中3','高1','高2','高3','高卒後'].map(g => (
+                        {['小学生','小1','小2','小3','小4','小5','小6','中学生','中1','中2','中3','高校生','高1','高2','高3','高卒後'].map(g => (
               <option key={g} value={g}>{g}</option>
             ))}
           </select>

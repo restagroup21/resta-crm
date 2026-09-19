@@ -129,19 +129,22 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-        {/* 学年 */}
+               {/* 学年 */}
         <Field label="📚 学年">
           <select name="grade" value={form.grade} onChange={handleChange} className="input">
             <option value="">選択してください</option>
+            <option value="小学生">小学生(学年不明)</option>
             <option value="小1">小1</option>
             <option value="小2">小2</option>
             <option value="小3">小3</option>
             <option value="小4">小4</option>
             <option value="小5">小5</option>
             <option value="小6">小6</option>
+            <option value="中学生">中学生(学年不明)</option>
             <option value="中1">中1</option>
             <option value="中2">中2</option>
             <option value="中3">中3</option>
+            <option value="高校生">高校生(学年不明)</option>
             <option value="高1">高1</option>
             <option value="高2">高2</option>
             <option value="高3">高3</option>
