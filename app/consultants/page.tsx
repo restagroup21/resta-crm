@@ -19,6 +19,9 @@ interface Consultant {
   line_name: string | null
   status: string | null
   notes: string | null
+  next_action_type: string | null
+  next_action_date: string | null
+  next_action_memo: string | null
 }
 
 interface ContactLog {
@@ -122,6 +125,14 @@ export default function ConsultantsPage() {
     対面面談: 'bg-indigo-100 text-indigo-700',
     辞退: 'bg-gray-100 text-gray-500',
     連絡待ち: 'bg-yellow-100 text-yellow-700',
+  }
+
+  const nextActionColors: Record<string, string> = {
+    連絡待ち: 'bg-yellow-100 text-yellow-700',
+    '電話・LINE予定': 'bg-blue-100 text-blue-700',
+    面談予定: 'bg-orange-100 text-orange-700',
+    辞退: 'bg-gray-200 text-gray-600',
+    その他: 'bg-gray-100 text-gray-700',
   }
 
   return (
@@ -229,10 +240,10 @@ export default function ConsultantsPage() {
                     )}
                   </div>
 
-                  {/* 最新対応 */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  {/* 最新対応 + 次回予定 */}
+                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
                     {latest ? (
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-sm flex-wrap">
                         <span className="text-gray-500">🕒 最新:</span>
                         <span className="font-medium text-gray-900">
                           {latest.date}
@@ -249,6 +260,30 @@ export default function ConsultantsPage() {
                       </div>
                     ) : (
                       <p className="text-xs text-gray-400">🕒 まだ対応履歴がありません</p>
+                    )}
+
+                    {/* 次回予定 */}
+                    {c.next_action_type && (
+                      <div className="flex items-center gap-2 text-sm flex-wrap">
+                        <span className="text-gray-500">🗓 次回:</span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            nextActionColors[c.next_action_type] || 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {c.next_action_type}
+                        </span>
+                        {c.next_action_date && (
+                          <span className="text-gray-700 text-xs">
+                            {c.next_action_date}
+                          </span>
+                        )}
+                        {c.next_action_memo && (
+                          <span className="text-gray-600 text-xs">
+                            {c.next_action_memo}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 
