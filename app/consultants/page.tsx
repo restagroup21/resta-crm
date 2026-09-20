@@ -300,11 +300,6 @@ export default function ConsultantsPage() {
                     {c.phone && <Tag>📞 {c.phone}</Tag>}
                   </div>
 
-                  {c.notes && (
-                    <p className="mt-3 text-sm text-gray-600 bg-gray-50 rounded p-2">
-                      📝 {c.notes}
-                    </p>
-                  )}
                 </Link>
               )
             })}

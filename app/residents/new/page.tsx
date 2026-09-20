@@ -117,7 +117,7 @@ export default function NewResidentPage() {
     const parts = []
     if (c.guardian_name) parts.push(c.guardian_name)
     if (c.name) parts.push(`(${c.name})`)
-    if (c.line_name && !c.guardian_name && !c.name) parts.push(`LINE: ${c.line_name}`)
+    if (c.line_name) parts.push(`[LINE: ${c.line_name}]`)
     return parts.join(' ') || `ID: ${c.id}`
   }
 

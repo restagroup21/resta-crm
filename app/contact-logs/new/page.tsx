@@ -26,6 +26,9 @@ export default function NewContactLogPage() {
     contact_date: new Date().toISOString().split('T')[0],
     contact_type: '',
     memo: '',
+    next_action_type: '',
+    next_action_date: '',
+    next_action_memo: '',
   })
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export default function NewContactLogPage() {
         memo: form.memo || null,
       }
 
-      const { error: insertError } = await supabase
+            const { error: insertError } = await supabase
         .from('contact_logs')
         .insert([payload])
 
@@ -89,6 +92,28 @@ export default function NewContactLogPage() {
         setError(`保存に失敗しました: ${insertError.message}`)
         setSubmitting(false)
         return
+      }
+
+      // 相談者情報を更新
+      const consultantUpdate: Record<string, string | null> = {}
+
+      // 対応種別が「辞退」ならステータスも自動更新
+      if (form.contact_type === '辞退') {
+        consultantUpdate.status = '対応終了'
+      }
+
+      // 次回予定が入力されていたら更新
+      if (form.next_action_type) {
+        consultantUpdate.next_action_type = form.next_action_type
+        consultantUpdate.next_action_date = form.next_action_date || null
+        consultantUpdate.next_action_memo = form.next_action_memo || null
+      }
+
+      if (Object.keys(consultantUpdate).length > 0) {
+        await supabase
+          .from('consultants')
+          .update(consultantUpdate)
+          .eq('id', parseInt(form.consultant_id))
       }
 
       router.push('/')
@@ -115,7 +140,7 @@ export default function NewContactLogPage() {
     const parts = []
     if (c.guardian_name) parts.push(c.guardian_name)
     if (c.name) parts.push(`(${c.name})`)
-    if (c.line_name && !c.guardian_name && !c.name) parts.push(`LINE: ${c.line_name}`)
+    if (c.line_name) parts.push(`[LINE: ${c.line_name}]`)
     return parts.join(' ') || `ID: ${c.id}`
   }
 
@@ -214,7 +239,7 @@ export default function NewContactLogPage() {
           </select>
         </Field>
 
-        {/* メモ */}
+                {/* メモ */}
         <Field label="📝 メモ">
           <textarea
             name="memo"
@@ -222,6 +247,45 @@ export default function NewContactLogPage() {
             onChange={handleChange}
             rows={5}
             placeholder="対応内容の詳細を記入"
+            className="input"
+          />
+        </Field>
+
+        {/* 次回予定 */}
+        <Field label="🗓 次回予定(相談者情報を更新)">
+          <select
+            name="next_action_type"
+            value={form.next_action_type}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">変更しない</option>
+            <option value="連絡待ち">連絡待ち</option>
+            <option value="電話・LINE予定">電話・LINE予定</option>
+            <option value="面談予定">面談予定</option>
+            <option value="その他">その他</option>
+          </select>
+        </Field>
+
+        {/* 次回予定日 */}
+        <Field label="📅 次回予定日(任意)">
+          <input
+            type="date"
+            name="next_action_date"
+            value={form.next_action_date}
+            onChange={handleChange}
+            className="input"
+          />
+        </Field>
+
+        {/* 次回予定メモ */}
+        <Field label="📝 次回予定メモ(任意)">
+          <input
+            type="text"
+            name="next_action_memo"
+            value={form.next_action_memo}
+            onChange={handleChange}
+            placeholder="例: 保護者と面談、資料送付予定"
             className="input"
           />
         </Field>

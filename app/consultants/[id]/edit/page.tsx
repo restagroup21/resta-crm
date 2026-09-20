@@ -28,6 +28,9 @@ export default function EditConsultantPage() {
     line_name: '',
     status: '',
     notes: '',
+    next_action_type: '',
+    next_action_date: '',
+    next_action_memo: '',
   })
 
   useEffect(() => {
@@ -62,6 +65,9 @@ export default function EditConsultantPage() {
         line_name: data.line_name ?? '',
         status: data.status ?? '対応中',
         notes: data.notes ?? '',
+        next_action_type: data.next_action_type ?? '',
+        next_action_date: data.next_action_date ?? '',
+        next_action_memo: data.next_action_memo ?? '',
       })
     } catch (e) {
       setError(`予期せぬエラー: ${e}`)
@@ -223,8 +229,43 @@ export default function EditConsultantPage() {
           </select>
         </Field>
 
-        <Field label="📝 備考">
+                <Field label="📝 内容">
           <textarea name="notes" value={form.notes} onChange={handleChange} rows={4} className="input" />
+        </Field>
+
+        <Field label="🗓 次回予定">
+          <select
+            name="next_action_type"
+            value={form.next_action_type}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">選択してください</option>
+            <option value="連絡待ち">連絡待ち</option>
+            <option value="電話・LINE予定">電話・LINE予定</option>
+            <option value="面談予定">面談予定</option>
+            <option value="その他">その他</option>
+          </select>
+        </Field>
+
+        <Field label="📅 次回予定日(任意)">
+          <input
+            type="date"
+            name="next_action_date"
+            value={form.next_action_date}
+            onChange={handleChange}
+            className="input"
+          />
+        </Field>
+
+        <Field label="📝 次回予定メモ(任意)">
+          <input
+            type="text"
+            name="next_action_memo"
+            value={form.next_action_memo}
+            onChange={handleChange}
+            className="input"
+          />
         </Field>
 
         <div className="flex gap-4 pt-4">

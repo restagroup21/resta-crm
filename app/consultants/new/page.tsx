@@ -24,6 +24,9 @@ export default function NewConsultantPage() {
     line_name: '',
     status: '対応中',
     notes: '',
+    next_action_type: '',
+    next_action_date: '',
+    next_action_memo: '',
   })
 
   const handleChange = (
@@ -268,14 +271,53 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-        {/* 備考 */}
-        <Field label="📝 備考">
+                {/* 内容 */}
+        <Field label="📝 内容">
           <textarea
             name="notes"
             value={form.notes}
             onChange={handleChange}
             rows={4}
-            placeholder="自由に記入"
+            placeholder="相談の内容"
+            className="input"
+          />
+        </Field>
+
+        {/* 次回予定 */}
+        <Field label="🗓 次回予定">
+          <select
+            name="next_action_type"
+            value={form.next_action_type}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">選択してください</option>
+            <option value="連絡待ち">連絡待ち</option>
+            <option value="電話・LINE予定">電話・LINE予定</option>
+            <option value="面談予定">面談予定</option>
+            <option value="その他">その他</option>
+          </select>
+        </Field>
+
+        {/* 次回予定日 */}
+        <Field label="📅 次回予定日(任意)">
+          <input
+            type="date"
+            name="next_action_date"
+            value={form.next_action_date}
+            onChange={handleChange}
+            className="input"
+          />
+        </Field>
+
+        {/* 次回予定メモ */}
+        <Field label="📝 次回予定メモ(任意)">
+          <input
+            type="text"
+            name="next_action_memo"
+            value={form.next_action_memo}
+            onChange={handleChange}
+            placeholder="例: 保護者と面談、資料送付予定"
             className="input"
           />
         </Field>
