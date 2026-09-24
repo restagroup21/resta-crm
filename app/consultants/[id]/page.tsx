@@ -20,6 +20,9 @@ interface Consultant {
   line_name: string | null
   status: string | null
   notes: string | null
+  next_action_type: string | null
+  next_action_date: string | null
+  next_action_memo: string | null
 }
 
 interface ContactLog {
@@ -56,7 +59,6 @@ export default function ConsultantDetailPage() {
   async function fetchData() {
     setLoading(true)
     try {
-      // 相談者情報
       const { data: c, error: e1 } = await supabase
         .from('consultants')
         .select('*')
@@ -69,7 +71,6 @@ export default function ConsultantDetailPage() {
       }
       setConsultant(c)
 
-      // 対応履歴
       const { data: logs } = await supabase
         .from('contact_logs')
         .select('*')
@@ -78,7 +79,6 @@ export default function ConsultantDetailPage() {
 
       setContactLogs(logs ?? [])
 
-      // 入寮情報
       const { data: res } = await supabase
         .from('residents')
         .select('*')
@@ -117,6 +117,26 @@ export default function ConsultantDetailPage() {
     }
   }
 
+  async function handleDeleteContactLog(logId: number) {
+    if (!confirm('この対応履歴を削除しますか?')) return
+
+    try {
+      const { error } = await supabase
+        .from('contact_logs')
+        .delete()
+        .eq('id', logId)
+
+      if (error) {
+        alert(`削除に失敗しました: ${error.message}`)
+        return
+      }
+
+      fetchData()
+    } catch (e) {
+      alert(`予期せぬエラー: ${e}`)
+    }
+  }
+
   const statusColors: Record<string, string> = {
     対応中: 'bg-blue-100 text-blue-700',
     検討中: 'bg-yellow-100 text-yellow-700',
@@ -124,6 +144,14 @@ export default function ConsultantDetailPage() {
     入寮済: 'bg-green-100 text-green-700',
     辞退: 'bg-gray-100 text-gray-500',
     対応終了: 'bg-gray-100 text-gray-500',
+  }
+
+  const nextActionColors: Record<string, string> = {
+    連絡待ち: 'bg-yellow-100 text-yellow-700',
+    '電話・LINE予定': 'bg-blue-100 text-blue-700',
+    面談予定: 'bg-orange-100 text-orange-700',
+    辞退: 'bg-gray-200 text-gray-600',
+    その他: 'bg-gray-100 text-gray-700',
   }
 
   if (loading) {
@@ -151,7 +179,6 @@ export default function ConsultantDetailPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
-      {/* ヘッダー */}
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
           <Link href="/consultants" className="text-gray-500 hover:text-gray-700 text-sm">
@@ -162,7 +189,7 @@ export default function ConsultantDetailPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* 基本情報カード */}
+        {/* 基本情報 */}
         <section className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -204,9 +231,35 @@ export default function ConsultantDetailPage() {
             />
           </dl>
 
+          {/* 次回予定 */}
+          {consultant.next_action_type && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-500 mb-2">🗓 次回予定</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={`px-2 py-1 rounded text-xs font-medium ${
+                    nextActionColors[consultant.next_action_type] || 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {consultant.next_action_type}
+                </span>
+                {consultant.next_action_date && (
+                  <span className="text-sm text-gray-700">
+                    {consultant.next_action_date}
+                  </span>
+                )}
+                {consultant.next_action_memo && (
+                  <span className="text-sm text-gray-600">
+                    {consultant.next_action_memo}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {consultant.notes && (
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500 mb-1">📝 備考</p>
+              <p className="text-xs text-gray-500 mb-1">📝 内容</p>
               <p className="text-sm text-gray-700 whitespace-pre-wrap">
                 {consultant.notes}
               </p>
@@ -255,8 +308,8 @@ export default function ConsultantDetailPage() {
                   key={log.id}
                   className="border-l-4 border-blue-200 pl-4 py-2"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1">
                       <span className="text-xs text-gray-500">
                         {log.contact_date}
                       </span>
@@ -265,6 +318,20 @@ export default function ConsultantDetailPage() {
                           {log.contact_type}
                         </span>
                       )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Link
+                        href={`/contact-logs/${log.id}/edit`}
+                        className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
+                      >
+                        ✏️
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteContactLog(log.id)}
+                        className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100"
+                      >
+                        🗑
+                      </button>
                     </div>
                   </div>
                   {log.memo && (
