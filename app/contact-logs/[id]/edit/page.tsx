@@ -105,9 +105,7 @@ export default function EditContactLogPage() {
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href={consultantId ? `/consultants/${consultantId}` : '/'} className="text-gray-500 hover:text-gray-700 text-sm">
-            ← 戻る
-          </Link>
+          <Link href={consultantId ? `/consultants/${consultantId}` : '/'} className="text-gray-500 hover:text-gray-700 text-sm">← 戻る</Link>
           <h1 className="text-2xl font-bold text-gray-900">対応履歴を編集</h1>
         </div>
       </header>
@@ -126,13 +124,16 @@ export default function EditContactLogPage() {
         <Field label="📞 対応種別" required>
           <select name="contact_type" value={form.contact_type} onChange={handleChange} required className="input">
             <option value="">選択してください</option>
+            <option value="初回問い合わせ">初回問い合わせ</option>
             <option value="LINE">LINE</option>
             <option value="電話">電話</option>
+            <option value="メール">メール</option>
+            <option value="メッセージ">メッセージ</option>
             <option value="オンライン面談">オンライン面談</option>
             <option value="対面面談">対面面談</option>
-            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="連絡待ち">連絡待ち</option>
+            <option value="その他">その他</option>
           </select>
         </Field>
 

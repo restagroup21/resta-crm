@@ -123,9 +123,7 @@ export default function EditConsultantPage() {
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href={`/consultants/${id}`} className="text-gray-500 hover:text-gray-700 text-sm">
-            ← 詳細
-          </Link>
+          <Link href={`/consultants/${id}`} className="text-gray-500 hover:text-gray-700 text-sm">← 詳細</Link>
           <h1 className="text-2xl font-bold text-gray-900">相談者を編集</h1>
         </div>
       </header>
@@ -205,6 +203,7 @@ export default function EditConsultantPage() {
             <option value="LINE">LINE</option>
             <option value="電話">電話</option>
             <option value="メール">メール</option>
+            <option value="メッセージ">メッセージ</option>
             <option value="その他">その他</option>
           </select>
         </Field>
@@ -233,6 +232,7 @@ export default function EditConsultantPage() {
             <option value="連絡待ち">連絡待ち</option>
             <option value="電話・LINE予定">電話・LINE予定</option>
             <option value="面談予定">面談予定</option>
+            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="その他">その他</option>
           </select>

@@ -128,19 +128,23 @@ export default function ConsultantsPage() {
   }
 
   const contactTypeColors: Record<string, string> = {
+    初回問い合わせ: 'bg-purple-100 text-purple-700',
     LINE: 'bg-green-100 text-green-700',
     電話: 'bg-orange-100 text-orange-700',
+    メール: 'bg-cyan-100 text-cyan-700',
+    メッセージ: 'bg-teal-100 text-teal-700',
     オンライン面談: 'bg-blue-100 text-blue-700',
     対面面談: 'bg-indigo-100 text-indigo-700',
     辞退: 'bg-gray-100 text-gray-500',
     連絡待ち: 'bg-yellow-100 text-yellow-700',
-    返信なし: 'bg-red-100 text-red-700',
+    その他: 'bg-gray-100 text-gray-700',
   }
 
   const nextActionColors: Record<string, string> = {
     連絡待ち: 'bg-yellow-100 text-yellow-700',
     '電話・LINE予定': 'bg-blue-100 text-blue-700',
     面談予定: 'bg-orange-100 text-orange-700',
+    返信なし: 'bg-red-100 text-red-700',
     辞退: 'bg-gray-200 text-gray-600',
     その他: 'bg-gray-100 text-gray-700',
   }
@@ -149,9 +153,7 @@ export default function ConsultantsPage() {
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
-            ← ホーム
-          </Link>
+          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">← ホーム</Link>
           <h1 className="text-2xl font-bold text-gray-900">相談者一覧</h1>
         </div>
       </header>
@@ -159,31 +161,14 @@ export default function ConsultantsPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-3">
           <div>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="🔍 氏名・LINE名で検索"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
-            />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 氏名・LINE名で検索" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600" />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setStatusFilter('')}
-              className={`px-3 py-1 rounded-full text-sm ${
-                statusFilter === '' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-              }`}
-            >
+            <button onClick={() => setStatusFilter('')} className={`px-3 py-1 rounded-full text-sm ${statusFilter === '' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
               すべて
             </button>
             {['対応中', '入寮済', '対応終了'].map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  statusFilter === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-              >
+              <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-1 rounded-full text-sm ${statusFilter === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
                 {s}
               </button>
             ))}
@@ -196,10 +181,7 @@ export default function ConsultantsPage() {
             {search || statusFilter ? ` / 全${consultants.length}件` : ''}
             <span className="ml-2 text-xs text-gray-400">(対応順)</span>
           </p>
-          <Link
-            href="/consultants/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-          >
+          <Link href="/consultants/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
             + 新規登録
           </Link>
         </div>
@@ -212,40 +194,24 @@ export default function ConsultantsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            {consultants.length === 0
-              ? '相談者がまだ登録されていません'
-              : '条件に合う相談者が見つかりません'}
+            {consultants.length === 0 ? '相談者がまだ登録されていません' : '条件に合う相談者が見つかりません'}
           </div>
         ) : (
           <div className="space-y-3">
             {filtered.map((c) => {
               const latest = latestContacts[c.id]
               return (
-                <Link
-                  key={c.id}
-                  href={`/consultants/${c.id}`}
-                  className="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
-                >
+                <Link key={c.id} href={`/consultants/${c.id}`} className="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-semibold text-gray-900">
                         {c.guardian_name || '(保護者名未登録)'}
-                        {c.name && (
-                          <span className="text-gray-500 font-normal ml-2">
-                            / {c.name}
-                          </span>
-                        )}
+                        {c.name && (<span className="text-gray-500 font-normal ml-2">/ {c.name}</span>)}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        受付: {c.received_date}
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">受付: {c.received_date}</p>
                     </div>
                     {c.status && (
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          statusColors[c.status] || 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[c.status] || 'bg-gray-100 text-gray-700'}`}>
                         {c.status}
                       </span>
                     )}
@@ -272,12 +238,8 @@ export default function ConsultantsPage() {
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${nextActionColors[c.next_action_type] || 'bg-gray-100 text-gray-700'}`}>
                           {c.next_action_type}
                         </span>
-                        {c.next_action_date && (
-                          <span className="text-gray-700 text-xs">{c.next_action_date}</span>
-                        )}
-                        {c.next_action_memo && (
-                          <span className="text-gray-600 text-xs">{c.next_action_memo}</span>
-                        )}
+                        {c.next_action_date && (<span className="text-gray-700 text-xs">{c.next_action_date}</span>)}
+                        {c.next_action_memo && (<span className="text-gray-600 text-xs">{c.next_action_memo}</span>)}
                       </div>
                     )}
                   </div>
@@ -306,8 +268,6 @@ export default function ConsultantsPage() {
 
 function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="bg-gray-100 px-2 py-1 rounded">
-      {children}
-    </span>
+    <span className="bg-gray-100 px-2 py-1 rounded">{children}</span>
   )
 }

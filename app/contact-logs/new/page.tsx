@@ -94,15 +94,12 @@ export default function NewContactLogPage() {
         return
       }
 
-      // 相談者情報を更新
       const consultantUpdate: Record<string, string | null> = {}
 
-      // 対応種別が「辞退」ならステータスも自動更新
       if (form.contact_type === '辞退') {
         consultantUpdate.status = '対応終了'
       }
 
-      // 次回予定が入力されていたら更新
       if (form.next_action_type) {
         consultantUpdate.next_action_type = form.next_action_type
         consultantUpdate.next_action_date = form.next_action_date || null
@@ -169,13 +166,7 @@ export default function NewContactLogPage() {
             </div>
           ) : (
             <>
-              <input
-                type="text"
-                value={searchConsultant}
-                onChange={(e) => setSearchConsultant(e.target.value)}
-                placeholder="🔍 氏名で絞り込み"
-                className="input mb-2"
-              />
+              <input type="text" value={searchConsultant} onChange={(e) => setSearchConsultant(e.target.value)} placeholder="🔍 氏名で絞り込み" className="input mb-2" />
               <select name="consultant_id" value={form.consultant_id} onChange={handleChange} required className="input">
                 <option value="">選択してください</option>
                 {filteredConsultants.map((c) => (
@@ -198,11 +189,13 @@ export default function NewContactLogPage() {
             <option value="">選択してください</option>
             <option value="LINE">LINE</option>
             <option value="電話">電話</option>
+            <option value="メール">メール</option>
+            <option value="メッセージ">メッセージ</option>
             <option value="オンライン面談">オンライン面談</option>
             <option value="対面面談">対面面談</option>
-            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="連絡待ち">連絡待ち</option>
+            <option value="その他">その他</option>
           </select>
         </Field>
 
@@ -216,6 +209,7 @@ export default function NewContactLogPage() {
             <option value="連絡待ち">連絡待ち</option>
             <option value="電話・LINE予定">電話・LINE予定</option>
             <option value="面談予定">面談予定</option>
+            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="その他">その他</option>
           </select>

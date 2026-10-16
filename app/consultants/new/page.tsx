@@ -45,14 +45,29 @@ export default function NewConsultantPage() {
         Object.entries(form).map(([k, v]) => [k, v === '' ? null : v])
       )
 
-      const { error: insertError } = await supabase
+      // 1. 相談者を登録
+      const { data: inserted, error: insertError } = await supabase
         .from('consultants')
         .insert([payload])
+        .select()
+        .single()
 
       if (insertError) {
         setError(`保存に失敗しました: ${insertError.message}`)
         setSubmitting(false)
         return
+      }
+
+      // 2. 対応履歴に「初回問い合わせ」を自動追加
+      if (inserted?.id) {
+        await supabase
+          .from('contact_logs')
+          .insert([{
+            consultant_id: inserted.id,
+            contact_date: form.received_date,
+            contact_type: '初回問い合わせ',
+            memo: form.notes || null,
+          }])
       }
 
       router.push('/')
@@ -165,6 +180,7 @@ export default function NewConsultantPage() {
             <option value="LINE">LINE</option>
             <option value="電話">電話</option>
             <option value="メール">メール</option>
+            <option value="メッセージ">メッセージ</option>
             <option value="その他">その他</option>
           </select>
         </Field>
@@ -183,7 +199,7 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-        <Field label="📝 内容">
+        <Field label="📝 内容(対応履歴にも自動保存されます)">
           <textarea name="notes" value={form.notes} onChange={handleChange} rows={4} placeholder="相談の内容" className="input" />
         </Field>
 
@@ -193,6 +209,7 @@ export default function NewConsultantPage() {
             <option value="連絡待ち">連絡待ち</option>
             <option value="電話・LINE予定">電話・LINE予定</option>
             <option value="面談予定">面談予定</option>
+            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="その他">その他</option>
           </select>
