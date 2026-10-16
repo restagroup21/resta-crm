@@ -56,8 +56,6 @@ export default function ConsultantsPage() {
       const { data: consultantsData, error: e1 } = await supabase
         .from('consultants')
         .select('*')
-        .order('received_date', { ascending: false })
-        .order('id', { ascending: false })
 
       if (e1) {
         setError(e1.message)
@@ -87,7 +85,32 @@ export default function ConsultantsPage() {
         }
       })
 
-      setConsultants(consultantsData ?? [])
+      // 並び替え: 最新対応がある人が上(対応日の新しい順)、ない人は下(受付日の降順)
+      const sorted = [...(consultantsData ?? [])].sort((a, b) => {
+        const latestA = latest[a.id]
+        const latestB = latest[b.id]
+
+        // 両方に対応履歴がある → 対応日の新しい順
+        if (latestA && latestB) {
+          if (latestA.date !== latestB.date) {
+            return latestA.date > latestB.date ? -1 : 1
+          }
+          return b.id - a.id
+        }
+
+        // A だけに対応履歴がある → A が上
+        if (latestA && !latestB) return -1
+        // B だけに対応履歴がある → B が上
+        if (!latestA && latestB) return 1
+
+        // 両方なし → 受付日の降順
+        if (a.received_date !== b.received_date) {
+          return a.received_date > b.received_date ? -1 : 1
+        }
+        return b.id - a.id
+      })
+
+      setConsultants(sorted)
       setLatestContacts(latest)
     } catch (e) {
       setError(`予期せぬエラー: ${e}`)
@@ -184,6 +207,7 @@ export default function ConsultantsPage() {
           <p className="text-sm text-gray-600">
             📊 <span className="font-semibold">{filtered.length}</span>件
             {search || statusFilter ? ` / 全${consultants.length}件` : ''}
+            <span className="ml-2 text-xs text-gray-400">(対応順)</span>
           </p>
           <Link
             href="/consultants/new"
@@ -299,7 +323,6 @@ export default function ConsultantsPage() {
                     )}
                     {c.phone && <Tag>📞 {c.phone}</Tag>}
                   </div>
-
                 </Link>
               )
             })}
