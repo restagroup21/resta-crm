@@ -37,6 +37,7 @@ interface Resident {
   entry_count: string | null
   entry_date: string
   exit_date: string | null
+  dorm: string | null
   notes: string | null
 }
 
@@ -139,10 +140,7 @@ export default function ConsultantDetailPage() {
 
   const statusColors: Record<string, string> = {
     対応中: 'bg-blue-100 text-blue-700',
-    検討中: 'bg-yellow-100 text-yellow-700',
-    入寮決定: 'bg-purple-100 text-purple-700',
     入寮済: 'bg-green-100 text-green-700',
-    辞退: 'bg-gray-100 text-gray-500',
     対応終了: 'bg-gray-100 text-gray-500',
   }
 
@@ -166,9 +164,7 @@ export default function ConsultantDetailPage() {
     return (
       <main className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-2xl mx-auto">
-          <Link href="/consultants" className="text-gray-500 text-sm">
-            ← 相談者一覧
-          </Link>
+          <Link href="/consultants" className="text-gray-500 text-sm">← 相談者一覧</Link>
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mt-4">
             エラー: {error || '相談者が見つかりません'}
           </div>
@@ -181,15 +177,12 @@ export default function ConsultantDetailPage() {
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href="/consultants" className="text-gray-500 hover:text-gray-700 text-sm">
-            ← 一覧
-          </Link>
+          <Link href="/consultants" className="text-gray-500 hover:text-gray-700 text-sm">← 一覧</Link>
           <h1 className="text-2xl font-bold text-gray-900">相談者詳細</h1>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* 基本情報 */}
         <section className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -201,11 +194,7 @@ export default function ConsultantDetailPage() {
               )}
             </div>
             {consultant.status && (
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  statusColors[consultant.status] || 'bg-gray-100 text-gray-700'
-                }`}
-              >
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[consultant.status] || 'bg-gray-100 text-gray-700'}`}>
                 {consultant.status}
               </span>
             )}
@@ -219,39 +208,21 @@ export default function ConsultantDetailPage() {
             <InfoItem label="📞 電話番号" value={consultant.phone} />
             <InfoItem label="🗾 都道府県" value={consultant.prefecture} />
             <InfoItem label="📢 どこで知ったか" value={consultant.inquiry_route} />
-            <InfoItem
-              label="📱 連絡手段"
-              value={
-                consultant.inquiry_channel
-                  ? `${consultant.inquiry_channel}${
-                      consultant.line_name ? ` (${consultant.line_name})` : ''
-                    }`
-                  : null
-              }
-            />
+            <InfoItem label="📱 連絡手段" value={consultant.inquiry_channel ? `${consultant.inquiry_channel}${consultant.line_name ? ` (${consultant.line_name})` : ''}` : null} />
           </dl>
 
-          {/* 次回予定 */}
           {consultant.next_action_type && (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <p className="text-xs text-gray-500 mb-2">🗓 次回予定</p>
               <div className="flex items-center gap-2 flex-wrap">
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    nextActionColors[consultant.next_action_type] || 'bg-gray-100 text-gray-700'
-                  }`}
-                >
+                <span className={`px-2 py-1 rounded text-xs font-medium ${nextActionColors[consultant.next_action_type] || 'bg-gray-100 text-gray-700'}`}>
                   {consultant.next_action_type}
                 </span>
                 {consultant.next_action_date && (
-                  <span className="text-sm text-gray-700">
-                    {consultant.next_action_date}
-                  </span>
+                  <span className="text-sm text-gray-700">{consultant.next_action_date}</span>
                 )}
                 {consultant.next_action_memo && (
-                  <span className="text-sm text-gray-600">
-                    {consultant.next_action_memo}
-                  </span>
+                  <span className="text-sm text-gray-600">{consultant.next_action_memo}</span>
                 )}
               </div>
             </div>
@@ -267,52 +238,32 @@ export default function ConsultantDetailPage() {
           )}
 
           <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100">
-            <Link
-              href={`/consultants/${id}/edit`}
-              className="flex-1 bg-blue-600 text-white text-center py-2 rounded-lg font-medium hover:bg-blue-700"
-            >
+            <Link href={`/consultants/${id}/edit`} className="flex-1 bg-blue-600 text-white text-center py-2 rounded-lg font-medium hover:bg-blue-700">
               ✏️ 編集
             </Link>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 disabled:opacity-50"
-            >
+            <button onClick={handleDelete} disabled={deleting} className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 disabled:opacity-50">
               {deleting ? '削除中...' : '🗑 削除'}
             </button>
           </div>
         </section>
 
-        {/* 対応履歴 */}
         <section className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               📝 対応履歴 ({contactLogs.length}件)
             </h3>
-            <Link
-              href="/contact-logs/new"
-              className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded"
-            >
-              + 追加
-            </Link>
+            <Link href="/contact-logs/new" className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded">+ 追加</Link>
           </div>
 
           {contactLogs.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              対応履歴がありません
-            </p>
+            <p className="text-sm text-gray-500 text-center py-4">対応履歴がありません</p>
           ) : (
             <div className="space-y-3">
               {contactLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="border-l-4 border-blue-200 pl-4 py-2"
-                >
+                <div key={log.id} className="border-l-4 border-blue-200 pl-4 py-2">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1">
-                      <span className="text-xs text-gray-500">
-                        {log.contact_date}
-                      </span>
+                      <span className="text-xs text-gray-500">{log.contact_date}</span>
                       {log.contact_type && (
                         <span className="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
                           {log.contact_type}
@@ -320,24 +271,16 @@ export default function ConsultantDetailPage() {
                       )}
                     </div>
                     <div className="flex gap-1">
-                      <Link
-                        href={`/contact-logs/${log.id}/edit`}
-                        className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
-                      >
+                      <Link href={`/contact-logs/${log.id}/edit`} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">
                         ✏️
                       </Link>
-                      <button
-                        onClick={() => handleDeleteContactLog(log.id)}
-                        className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100"
-                      >
+                      <button onClick={() => handleDeleteContactLog(log.id)} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">
                         🗑
                       </button>
                     </div>
                   </div>
                   {log.memo && (
-                    <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
-                      {log.memo}
-                    </p>
+                    <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{log.memo}</p>
                   )}
                 </div>
               ))}
@@ -345,42 +288,30 @@ export default function ConsultantDetailPage() {
           )}
         </section>
 
-        {/* 入寮情報 */}
         <section className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               🏠 入寮情報 ({residents.length}件)
             </h3>
-            <Link
-              href="/residents/new"
-              className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded"
-            >
-              + 追加
-            </Link>
+            <Link href="/residents/new" className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded">+ 追加</Link>
           </div>
 
           {residents.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              入寮情報がありません
-            </p>
+            <p className="text-sm text-gray-500 text-center py-4">入寮情報がありません</p>
           ) : (
             <div className="space-y-3">
               {residents.map((r) => (
-                <div
-                  key={r.id}
-                  className="border rounded-lg p-3 bg-gray-50"
-                >
+                <div key={r.id} className="border rounded-lg p-3 bg-gray-50">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium text-sm">
-                      {r.entry_count}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded ${
-                        r.exit_date
-                          ? 'bg-gray-200 text-gray-600'
-                          : 'bg-green-100 text-green-700'
-                      }`}
-                    >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{r.entry_count}</span>
+                      {r.dorm && (
+                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">
+                          🏠 {r.dorm}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded ${r.exit_date ? 'bg-gray-200 text-gray-600' : 'bg-green-100 text-green-700'}`}>
                       {r.exit_date ? '退寮済' : '在寮中'}
                     </span>
                   </div>

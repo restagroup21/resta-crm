@@ -81,7 +81,6 @@ export default function EditContactLogPage() {
         return
       }
 
-      // 元の相談者詳細ページに戻る
       if (consultantId) {
         router.push(`/consultants/${consultantId}`)
       } else {
@@ -106,20 +105,14 @@ export default function EditContactLogPage() {
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link
-            href={consultantId ? `/consultants/${consultantId}` : '/'}
-            className="text-gray-500 hover:text-gray-700 text-sm"
-          >
+          <Link href={consultantId ? `/consultants/${consultantId}` : '/'} className="text-gray-500 hover:text-gray-700 text-sm">
             ← 戻る
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">対応履歴を編集</h1>
         </div>
       </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto px-4 py-8 space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
             {error}
@@ -127,57 +120,31 @@ export default function EditContactLogPage() {
         )}
 
         <Field label="📅 対応日" required>
-          <input
-            type="date"
-            name="contact_date"
-            value={form.contact_date}
-            onChange={handleChange}
-            required
-            className="input"
-          />
+          <input type="date" name="contact_date" value={form.contact_date} onChange={handleChange} required className="input" />
         </Field>
 
         <Field label="📞 対応種別" required>
-          <select
-            name="contact_type"
-            value={form.contact_type}
-            onChange={handleChange}
-            required
-            className="input"
-          >
+          <select name="contact_type" value={form.contact_type} onChange={handleChange} required className="input">
             <option value="">選択してください</option>
             <option value="LINE">LINE</option>
             <option value="電話">電話</option>
             <option value="オンライン面談">オンライン面談</option>
             <option value="対面面談">対面面談</option>
+            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="連絡待ち">連絡待ち</option>
           </select>
         </Field>
 
         <Field label="📝 メモ">
-          <textarea
-            name="memo"
-            value={form.memo}
-            onChange={handleChange}
-            rows={5}
-            placeholder="対応内容の詳細を記入"
-            className="input"
-          />
+          <textarea name="memo" value={form.memo} onChange={handleChange} rows={5} placeholder="対応内容の詳細を記入" className="input" />
         </Field>
 
         <div className="flex gap-4 pt-4">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-          >
+          <button type="submit" disabled={submitting} className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
             {submitting ? '保存中...' : '💾 保存'}
           </button>
-          <Link
-            href={consultantId ? `/consultants/${consultantId}` : '/'}
-            className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 text-center"
-          >
+          <Link href={consultantId ? `/consultants/${consultantId}` : '/'} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 text-center">
             キャンセル
           </Link>
         </div>
@@ -202,15 +169,7 @@ export default function EditContactLogPage() {
   )
 }
 
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-}) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">

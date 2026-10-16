@@ -52,7 +52,6 @@ export default function ConsultantsPage() {
   async function fetchAll() {
     setLoading(true)
     try {
-      // 相談者
       const { data: consultantsData, error: e1 } = await supabase
         .from('consultants')
         .select('*')
@@ -62,7 +61,6 @@ export default function ConsultantsPage() {
         return
       }
 
-      // 対応履歴(全件、日付降順)
       const { data: logsData, error: e2 } = await supabase
         .from('contact_logs')
         .select('*')
@@ -74,7 +72,6 @@ export default function ConsultantsPage() {
         return
       }
 
-      // 各相談者の最新対応履歴を抽出
       const latest: Record<number, LatestContact> = {}
       ;(logsData ?? []).forEach((log: ContactLog) => {
         if (!latest[log.consultant_id]) {
@@ -85,25 +82,17 @@ export default function ConsultantsPage() {
         }
       })
 
-      // 並び替え: 最新対応がある人が上(対応日の新しい順)、ない人は下(受付日の降順)
       const sorted = [...(consultantsData ?? [])].sort((a, b) => {
         const latestA = latest[a.id]
         const latestB = latest[b.id]
-
-        // 両方に対応履歴がある → 対応日の新しい順
         if (latestA && latestB) {
           if (latestA.date !== latestB.date) {
             return latestA.date > latestB.date ? -1 : 1
           }
           return b.id - a.id
         }
-
-        // A だけに対応履歴がある → A が上
         if (latestA && !latestB) return -1
-        // B だけに対応履歴がある → B が上
         if (!latestA && latestB) return 1
-
-        // 両方なし → 受付日の降順
         if (a.received_date !== b.received_date) {
           return a.received_date > b.received_date ? -1 : 1
         }
@@ -134,10 +123,7 @@ export default function ConsultantsPage() {
 
   const statusColors: Record<string, string> = {
     対応中: 'bg-blue-100 text-blue-700',
-    検討中: 'bg-yellow-100 text-yellow-700',
-    入寮決定: 'bg-purple-100 text-purple-700',
     入寮済: 'bg-green-100 text-green-700',
-    辞退: 'bg-gray-100 text-gray-500',
     対応終了: 'bg-gray-100 text-gray-500',
   }
 
@@ -148,6 +134,7 @@ export default function ConsultantsPage() {
     対面面談: 'bg-indigo-100 text-indigo-700',
     辞退: 'bg-gray-100 text-gray-500',
     連絡待ち: 'bg-yellow-100 text-yellow-700',
+    返信なし: 'bg-red-100 text-red-700',
   }
 
   const nextActionColors: Record<string, string> = {
@@ -189,7 +176,7 @@ export default function ConsultantsPage() {
             >
               すべて
             </button>
-            {['対応中', '検討中', '入寮決定', '入寮済', '辞退', '対応終了'].map((s) => (
+            {['対応中', '入寮済', '対応終了'].map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
@@ -264,20 +251,13 @@ export default function ConsultantsPage() {
                     )}
                   </div>
 
-                  {/* 最新対応 + 次回予定 */}
                   <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
                     {latest ? (
                       <div className="flex items-center gap-2 text-sm flex-wrap">
                         <span className="text-gray-500">🕒 最新:</span>
-                        <span className="font-medium text-gray-900">
-                          {latest.date}
-                        </span>
+                        <span className="font-medium text-gray-900">{latest.date}</span>
                         {latest.type && (
-                          <span
-                            className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              contactTypeColors[latest.type] || 'bg-gray-100 text-gray-700'
-                            }`}
-                          >
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${contactTypeColors[latest.type] || 'bg-gray-100 text-gray-700'}`}>
                             {latest.type}
                           </span>
                         )}
@@ -286,26 +266,17 @@ export default function ConsultantsPage() {
                       <p className="text-xs text-gray-400">🕒 まだ対応履歴がありません</p>
                     )}
 
-                    {/* 次回予定 */}
                     {c.next_action_type && (
                       <div className="flex items-center gap-2 text-sm flex-wrap">
                         <span className="text-gray-500">🗓 次回:</span>
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            nextActionColors[c.next_action_type] || 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${nextActionColors[c.next_action_type] || 'bg-gray-100 text-gray-700'}`}>
                           {c.next_action_type}
                         </span>
                         {c.next_action_date && (
-                          <span className="text-gray-700 text-xs">
-                            {c.next_action_date}
-                          </span>
+                          <span className="text-gray-700 text-xs">{c.next_action_date}</span>
                         )}
                         {c.next_action_memo && (
-                          <span className="text-gray-600 text-xs">
-                            {c.next_action_memo}
-                          </span>
+                          <span className="text-gray-600 text-xs">{c.next_action_memo}</span>
                         )}
                       </div>
                     )}

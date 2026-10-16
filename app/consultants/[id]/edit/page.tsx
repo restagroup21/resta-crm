@@ -130,10 +130,7 @@ export default function EditConsultantPage() {
         </div>
       </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto px-4 py-8 space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
             {error}
@@ -164,7 +161,7 @@ export default function EditConsultantPage() {
         <Field label="📚 学年">
           <select name="grade" value={form.grade} onChange={handleChange} className="input">
             <option value="">選択してください</option>
-                        {['小学生','小1','小2','小3','小4','小5','小6','中学生','中1','中2','中3','高校生','高1','高2','高3','高卒後'].map(g => (
+            {['小学生','小1','小2','小3','小4','小5','小6','中学生','中1','中2','中3','高校生','高1','高2','高3','高卒後'].map(g => (
               <option key={g} value={g}>{g}</option>
             ))}
           </select>
@@ -221,65 +218,39 @@ export default function EditConsultantPage() {
         <Field label="📊 ステータス">
           <select name="status" value={form.status} onChange={handleChange} className="input">
             <option value="対応中">対応中</option>
-            <option value="検討中">検討中</option>
-            <option value="入寮決定">入寮決定</option>
             <option value="入寮済">入寮済</option>
-            <option value="辞退">辞退</option>
             <option value="対応終了">対応終了</option>
           </select>
         </Field>
 
-                <Field label="📝 内容">
+        <Field label="📝 内容">
           <textarea name="notes" value={form.notes} onChange={handleChange} rows={4} className="input" />
         </Field>
 
         <Field label="🗓 次回予定">
-          <select
-            name="next_action_type"
-            value={form.next_action_type}
-            onChange={handleChange}
-            className="input"
-          >
+          <select name="next_action_type" value={form.next_action_type} onChange={handleChange} className="input">
             <option value="">選択してください</option>
             <option value="連絡待ち">連絡待ち</option>
             <option value="電話・LINE予定">電話・LINE予定</option>
             <option value="面談予定">面談予定</option>
+            <option value="辞退">辞退</option>
             <option value="その他">その他</option>
           </select>
         </Field>
 
         <Field label="📅 次回予定日(任意)">
-          <input
-            type="date"
-            name="next_action_date"
-            value={form.next_action_date}
-            onChange={handleChange}
-            className="input"
-          />
+          <input type="date" name="next_action_date" value={form.next_action_date} onChange={handleChange} className="input" />
         </Field>
 
         <Field label="📝 次回予定メモ(任意)">
-          <input
-            type="text"
-            name="next_action_memo"
-            value={form.next_action_memo}
-            onChange={handleChange}
-            className="input"
-          />
+          <input type="text" name="next_action_memo" value={form.next_action_memo} onChange={handleChange} className="input" />
         </Field>
 
         <div className="flex gap-4 pt-4">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-          >
+          <button type="submit" disabled={submitting} className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
             {submitting ? '保存中...' : '💾 保存'}
           </button>
-          <Link
-            href={`/consultants/${id}`}
-            className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 text-center"
-          >
+          <Link href={`/consultants/${id}`} className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 text-center">
             キャンセル
           </Link>
         </div>

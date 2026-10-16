@@ -84,7 +84,7 @@ export default function NewContactLogPage() {
         memo: form.memo || null,
       }
 
-            const { error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from('contact_logs')
         .insert([payload])
 
@@ -124,7 +124,6 @@ export default function NewContactLogPage() {
     }
   }
 
-  // 相談者検索フィルタ
   const filteredConsultants = consultants.filter((c) => {
     if (!searchConsultant) return true
     const s = searchConsultant.toLowerCase()
@@ -135,7 +134,6 @@ export default function NewContactLogPage() {
     )
   })
 
-  // 相談者の表示名
   const consultantLabel = (c: Consultant) => {
     const parts = []
     if (c.guardian_name) parts.push(c.guardian_name)
@@ -146,36 +144,27 @@ export default function NewContactLogPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
-      {/* ヘッダー */}
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
-            ← ホーム
-          </Link>
+          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">← ホーム</Link>
           <h1 className="text-2xl font-bold text-gray-900">対応履歴を追加</h1>
         </div>
       </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto px-4 py-8 space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
             {error}
           </div>
         )}
 
-        {/* 相談者選択 */}
         <Field label="👤 相談者を選択" required>
           {loading ? (
             <p className="text-gray-500 text-sm py-2">読み込み中...</p>
           ) : consultants.length === 0 ? (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 text-sm">
               相談者がまだ登録されていません。
-              <Link href="/consultants/new" className="underline ml-1">
-                先に新規問い合わせ登録
-              </Link>
+              <Link href="/consultants/new" className="underline ml-1">先に新規問い合わせ登録</Link>
               をしてください。
             </div>
           ) : (
@@ -187,18 +176,10 @@ export default function NewContactLogPage() {
                 placeholder="🔍 氏名で絞り込み"
                 className="input mb-2"
               />
-              <select
-                name="consultant_id"
-                value={form.consultant_id}
-                onChange={handleChange}
-                required
-                className="input"
-              >
+              <select name="consultant_id" value={form.consultant_id} onChange={handleChange} required className="input">
                 <option value="">選択してください</option>
                 {filteredConsultants.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {consultantLabel(c)}
-                  </option>
+                  <option key={c.id} value={c.id}>{consultantLabel(c)}</option>
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">
@@ -208,101 +189,51 @@ export default function NewContactLogPage() {
           )}
         </Field>
 
-        {/* 対応日 */}
         <Field label="📅 対応日" required>
-          <input
-            type="date"
-            name="contact_date"
-            value={form.contact_date}
-            onChange={handleChange}
-            required
-            className="input"
-          />
+          <input type="date" name="contact_date" value={form.contact_date} onChange={handleChange} required className="input" />
         </Field>
 
-        {/* 対応種別 */}
         <Field label="📞 対応種別" required>
-          <select
-            name="contact_type"
-            value={form.contact_type}
-            onChange={handleChange}
-            required
-            className="input"
-          >
+          <select name="contact_type" value={form.contact_type} onChange={handleChange} required className="input">
             <option value="">選択してください</option>
             <option value="LINE">LINE</option>
             <option value="電話">電話</option>
             <option value="オンライン面談">オンライン面談</option>
             <option value="対面面談">対面面談</option>
+            <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="連絡待ち">連絡待ち</option>
           </select>
         </Field>
 
-                {/* メモ */}
         <Field label="📝 メモ">
-          <textarea
-            name="memo"
-            value={form.memo}
-            onChange={handleChange}
-            rows={5}
-            placeholder="対応内容の詳細を記入"
-            className="input"
-          />
+          <textarea name="memo" value={form.memo} onChange={handleChange} rows={5} placeholder="対応内容の詳細を記入" className="input" />
         </Field>
 
-        {/* 次回予定 */}
         <Field label="🗓 次回予定(相談者情報を更新)">
-          <select
-            name="next_action_type"
-            value={form.next_action_type}
-            onChange={handleChange}
-            className="input"
-          >
+          <select name="next_action_type" value={form.next_action_type} onChange={handleChange} className="input">
             <option value="">変更しない</option>
             <option value="連絡待ち">連絡待ち</option>
             <option value="電話・LINE予定">電話・LINE予定</option>
             <option value="面談予定">面談予定</option>
+            <option value="辞退">辞退</option>
             <option value="その他">その他</option>
           </select>
         </Field>
 
-        {/* 次回予定日 */}
         <Field label="📅 次回予定日(任意)">
-          <input
-            type="date"
-            name="next_action_date"
-            value={form.next_action_date}
-            onChange={handleChange}
-            className="input"
-          />
+          <input type="date" name="next_action_date" value={form.next_action_date} onChange={handleChange} className="input" />
         </Field>
 
-        {/* 次回予定メモ */}
         <Field label="📝 次回予定メモ(任意)">
-          <input
-            type="text"
-            name="next_action_memo"
-            value={form.next_action_memo}
-            onChange={handleChange}
-            placeholder="例: 保護者と面談、資料送付予定"
-            className="input"
-          />
+          <input type="text" name="next_action_memo" value={form.next_action_memo} onChange={handleChange} placeholder="例: 保護者と面談、資料送付予定" className="input" />
         </Field>
 
-        {/* ボタン */}
         <div className="flex gap-4 pt-4">
-          <button
-            type="submit"
-            disabled={submitting || consultants.length === 0}
-            className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
+          <button type="submit" disabled={submitting || consultants.length === 0} className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
             {submitting ? '保存中...' : '💾 保存'}
           </button>
-          <Link
-            href="/"
-            className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 transition-colors text-center"
-          >
+          <Link href="/" className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 transition-colors text-center">
             キャンセル
           </Link>
         </div>
@@ -327,15 +258,7 @@ export default function NewContactLogPage() {
   )
 }
 
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-}) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
