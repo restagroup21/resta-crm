@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -18,12 +18,16 @@ interface Stats {
   inquiryChannelBreakdown: Record<string, number>
   prefectureTop: Array<{ name: string; count: number }>
   dormBreakdown: Record<string, number>
+  consultantDates: string[]  // received_dateのリスト
 }
+
+type Period = '30days' | 'thisMonth' | '3months'
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [period, setPeriod] = useState<Period>('30days')
 
   useEffect(() => {
     fetchStats()
@@ -50,7 +54,6 @@ export default function DashboardPage() {
       const totalConsultants = consultants?.length ?? 0
       const totalContactLogs = contactLogs?.length ?? 0
       const totalResidents = residents?.length ?? 0
-
       const activeResidents = residents?.filter((r) => !r.exit_date).length ?? 0
 
       const conversionRate = totalConsultants > 0
@@ -91,7 +94,7 @@ export default function DashboardPage() {
       }
 
       const inquiryChannelBreakdown: Record<string, number> = {}
-      for (const ch of ['LINE', '電話', 'メール', 'その他']) {
+      for (const ch of ['LINE', '電話', 'メール', 'メッセージ', 'その他']) {
         inquiryChannelBreakdown[ch] = consultants?.filter((c) => c.inquiry_channel === ch).length ?? 0
       }
 
@@ -106,11 +109,15 @@ export default function DashboardPage() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
 
-      // 寮別集計(現在在寮中のみ)
       const dormBreakdown: Record<string, number> = {}
       for (const d of ['東京本校', '静岡校']) {
         dormBreakdown[d] = residents?.filter((r) => !r.exit_date && r.dorm === d).length ?? 0
       }
+
+      // 問い合わせ日のリスト
+      const consultantDates = consultants
+        ?.map((c) => c.received_date)
+        .filter((d): d is string => !!d) ?? []
 
       setStats({
         totalConsultants,
@@ -126,6 +133,7 @@ export default function DashboardPage() {
         inquiryChannelBreakdown,
         prefectureTop,
         dormBreakdown,
+        consultantDates,
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -133,6 +141,98 @@ export default function DashboardPage() {
       setLoading(false)
     }
   }
+
+  // 期間別の問い合わせ数集計
+  const chartData = useMemo(() => {
+    if (!stats) return { labels: [], values: [], max: 0, periodLabel: '' }
+
+    const now = new Date()
+    const dateCount: Record<string, number> = {}
+
+    if (period === '30days') {
+      // 直近30日間、日ごと
+      const labels: string[] = []
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now)
+        d.setDate(d.getDate() - i)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        labels.push(key)
+        dateCount[key] = 0
+      }
+      stats.consultantDates.forEach((d) => {
+        if (dateCount[d] !== undefined) {
+          dateCount[d]++
+        }
+      })
+      const values = labels.map((l) => dateCount[l])
+      const displayLabels = labels.map((l) => {
+        const [, m, d] = l.split('-')
+        return `${parseInt(m)}/${parseInt(d)}`
+      })
+      return {
+        labels: displayLabels,
+        values,
+        max: Math.max(...values, 1),
+        periodLabel: '直近30日(日ごと)',
+      }
+    } else if (period === 'thisMonth') {
+      // 今月、日ごと
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+      const daysInMonth = new Date(year, month, 0).getDate()
+
+      const labels: string[] = []
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+        labels.push(key)
+        dateCount[key] = 0
+      }
+      stats.consultantDates.forEach((d) => {
+        if (dateCount[d] !== undefined) {
+          dateCount[d]++
+        }
+      })
+      const values = labels.map((l) => dateCount[l])
+      const displayLabels = labels.map((l) => {
+        const [, , d] = l.split('-')
+        return `${parseInt(d)}日`
+      })
+      return {
+        labels: displayLabels,
+        values,
+        max: Math.max(...values, 1),
+        periodLabel: `${year}年${month}月(日ごと)`,
+      }
+    } else {
+      // 直近3ヶ月、月ごと
+      const labels: string[] = []
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        labels.push(key)
+        dateCount[key] = 0
+      }
+      stats.consultantDates.forEach((d) => {
+        const monthKey = d.slice(0, 7)
+        if (dateCount[monthKey] !== undefined) {
+          dateCount[monthKey]++
+        }
+      })
+      const values = labels.map((l) => dateCount[l])
+      const displayLabels = labels.map((l) => {
+        const [y, m] = l.split('-')
+        return `${y.slice(2)}/${parseInt(m)}月`
+      })
+      return {
+        labels: displayLabels,
+        values,
+        max: Math.max(...values, 1),
+        periodLabel: '直近3ヶ月(月ごと)',
+      }
+    }
+  }, [stats, period])
+
+  const total = chartData.values.reduce((a, b) => a + b, 0)
 
   if (loading) {
     return (
@@ -175,6 +275,41 @@ export default function DashboardPage() {
             <Kpi label="転換率" value={stats.conversionRate} unit="%" color="orange" />
             <Kpi label="平均在寮期間" value={stats.avgStayMonths} unit="ヶ月" color="pink" />
           </div>
+        </section>
+
+        {/* 問い合わせ数グラフ */}
+        <section className="bg-white rounded-lg shadow-sm p-5">
+          <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <h3 className="text-base font-semibold text-gray-700">
+              📈 問い合わせ数の推移
+            </h3>
+            <div className="flex gap-1">
+              {([
+                { key: '30days', label: '30日' },
+                { key: 'thisMonth', label: '今月' },
+                { key: '3months', label: '3ヶ月' },
+              ] as const).map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => setPeriod(p.key)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    period === p.key
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500 mb-3">
+            {chartData.periodLabel} - 合計 <span className="font-semibold text-gray-900">{total}</span>件
+          </p>
+
+          {/* 棒グラフ(SVG) */}
+          <BarChart labels={chartData.labels} values={chartData.values} max={chartData.max} />
         </section>
 
         <section>
@@ -239,6 +374,77 @@ export default function DashboardPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+function BarChart({ labels, values, max }: { labels: string[]; values: number[]; max: number }) {
+  const barCount = labels.length
+  const chartHeight = 180
+  const chartWidth = Math.max(barCount * 24, 320)  // 棒ごとに24px確保
+  const barWidth = chartWidth / barCount - 4  // 棒の幅
+  const padding = 4
+
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        width={chartWidth}
+        height={chartHeight + 40}
+        className="min-w-full"
+      >
+        {/* 棒グラフ */}
+        {values.map((v, i) => {
+          const barHeight = max > 0 ? (v / max) * chartHeight : 0
+          const x = i * (chartWidth / barCount) + padding / 2
+          const y = chartHeight - barHeight
+
+          return (
+            <g key={i}>
+              {/* 棒 */}
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={barHeight}
+                fill={v > 0 ? '#3b82f6' : '#e5e7eb'}
+                rx="2"
+              />
+              {/* 値ラベル(0以外のみ) */}
+              {v > 0 && (
+                <text
+                  x={x + barWidth / 2}
+                  y={y - 4}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill="#374151"
+                  fontWeight="600"
+                >
+                  {v}
+                </text>
+              )}
+              {/* X軸ラベル */}
+              <text
+                x={x + barWidth / 2}
+                y={chartHeight + 15}
+                textAnchor="middle"
+                fontSize="9"
+                fill="#6b7280"
+              >
+                {labels[i]}
+              </text>
+            </g>
+          )
+        })}
+        {/* X軸 */}
+        <line
+          x1={0}
+          y1={chartHeight}
+          x2={chartWidth}
+          y2={chartHeight}
+          stroke="#d1d5db"
+          strokeWidth="1"
+        />
+      </svg>
+    </div>
   )
 }
 
