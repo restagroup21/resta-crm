@@ -138,6 +138,26 @@ export default function ConsultantDetailPage() {
     }
   }
 
+  async function handleDeleteResident(residentId: number) {
+    if (!confirm('この入寮情報を削除しますか?')) return
+
+    try {
+      const { error } = await supabase
+        .from('residents')
+        .delete()
+        .eq('id', residentId)
+
+      if (error) {
+        alert(`削除に失敗しました: ${error.message}`)
+        return
+      }
+
+      fetchData()
+    } catch (e) {
+      alert(`予期せぬエラー: ${e}`)
+    }
+  }
+
   const statusColors: Record<string, string> = {
     対応中: 'bg-blue-100 text-blue-700',
     入寮済: 'bg-green-100 text-green-700',
@@ -314,20 +334,28 @@ export default function ConsultantDetailPage() {
             <div className="space-y-3">
               {residents.map((r) => (
                 <div key={r.id} className="border rounded-lg p-3 bg-gray-50">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-center gap-2 flex-wrap flex-1">
                       <span className="font-medium text-sm">{r.entry_count}</span>
                       {r.dorm && (
                         <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">
                           🏠 {r.dorm}
                         </span>
                       )}
+                      <span className={`text-xs px-2 py-0.5 rounded ${r.exit_date ? 'bg-gray-200 text-gray-600' : 'bg-green-100 text-green-700'}`}>
+                        {r.exit_date ? '退寮済' : '在寮中'}
+                      </span>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded ${r.exit_date ? 'bg-gray-200 text-gray-600' : 'bg-green-100 text-green-700'}`}>
-                      {r.exit_date ? '退寮済' : '在寮中'}
-                    </span>
+                    <div className="flex gap-1">
+                      <Link href={`/residents/${r.id}/edit`} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">
+                        ✏️
+                      </Link>
+                      <button onClick={() => handleDeleteResident(r.id)} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">
+                        🗑
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">
+                  <div className="text-xs text-gray-600 mt-2">
                     📅 入寮: {r.entry_date}
                     {r.exit_date && <> / 退寮: {r.exit_date}</>}
                   </div>

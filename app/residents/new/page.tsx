@@ -99,9 +99,15 @@ function NewResidentContent() {
         return
       }
 
+      // 相談者ステータスを「入寮済」に、次回予定をクリア
       await supabase
         .from('consultants')
-        .update({ status: '入寮済' })
+        .update({
+          status: '入寮済',
+          next_action_type: null,
+          next_action_date: null,
+          next_action_memo: null,
+        })
         .eq('id', parseInt(form.consultant_id))
 
       if (preselectedConsultantId) {
@@ -220,6 +226,10 @@ function NewResidentContent() {
         <Field label="📝 備考">
           <textarea name="notes" value={form.notes} onChange={handleChange} rows={4} placeholder="自由に記入" className="input" />
         </Field>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+          💡 保存すると、相談者のステータスが「入寮済」になり、次回予定はクリアされます
+        </div>
 
         <div className="flex gap-4 pt-4">
           <button type="submit" disabled={submitting || consultants.length === 0} className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">

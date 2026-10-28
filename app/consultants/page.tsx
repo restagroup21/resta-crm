@@ -45,6 +45,7 @@ export default function ConsultantsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [nextActionOnly, setNextActionOnly] = useState<boolean>(false)
+  const [nextActionTypeFilter, setNextActionTypeFilter] = useState<string>('')
 
   useEffect(() => {
     fetchAll()
@@ -119,9 +120,12 @@ export default function ConsultantsPage() {
 
     const matchesStatus = !statusFilter || c.status === statusFilter
 
-    const matchesNextAction = !nextActionOnly || !!c.next_action_type
+    const matchesNextActionAny = !nextActionOnly || !!c.next_action_type
 
-    return matchesSearch && matchesStatus && matchesNextAction
+    const matchesNextActionType =
+      !nextActionTypeFilter || c.next_action_type === nextActionTypeFilter
+
+    return matchesSearch && matchesStatus && matchesNextActionAny && matchesNextActionType
   })
 
   const statusColors: Record<string, string> = {
@@ -152,6 +156,17 @@ export default function ConsultantsPage() {
     その他: 'bg-gray-100 text-gray-700',
   }
 
+  // 「次回予定あり」をオフにしたら、種別フィルターもクリア
+  const toggleNextActionOnly = () => {
+    const newVal = !nextActionOnly
+    setNextActionOnly(newVal)
+    if (!newVal) {
+      setNextActionTypeFilter('')
+    }
+  }
+
+  const nextActionTypes = ['連絡待ち', '電話・LINE予定', '面談予定', '返信なし', '辞退', 'その他']
+
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
@@ -176,18 +191,46 @@ export default function ConsultantsPage() {
               </button>
             ))}
             <button
-              onClick={() => setNextActionOnly(!nextActionOnly)}
+              onClick={toggleNextActionOnly}
               className={`px-3 py-1 rounded-full text-sm ${nextActionOnly ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700'}`}
             >
-              🗓 次回予定あり
+              🗓 次回予定あり {nextActionOnly ? '▼' : '▶'}
             </button>
           </div>
+
+          {/* 次回予定の種別フィルター(「次回予定あり」オンの時だけ表示) */}
+          {nextActionOnly && (
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-500 mb-2">次回予定の種別で絞り込み:</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setNextActionTypeFilter('')}
+                  className={`px-3 py-1 rounded-full text-xs ${nextActionTypeFilter === '' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  すべて
+                </button>
+                {nextActionTypes.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setNextActionTypeFilter(t)}
+                    className={`px-3 py-1 rounded-full text-xs ${
+                      nextActionTypeFilter === t
+                        ? 'bg-orange-500 text-white'
+                        : nextActionColors[t] || 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-600">
             📊 <span className="font-semibold">{filtered.length}</span>件
-            {search || statusFilter || nextActionOnly ? ` / 全${consultants.length}件` : ''}
+            {search || statusFilter || nextActionOnly || nextActionTypeFilter ? ` / 全${consultants.length}件` : ''}
             <span className="ml-2 text-xs text-gray-400">(対応順)</span>
           </p>
           <Link href="/consultants/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
