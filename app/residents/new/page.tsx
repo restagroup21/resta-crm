@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -13,8 +13,11 @@ interface Consultant {
   received_date: string
 }
 
-export default function NewResidentPage() {
+function NewResidentContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const preselectedConsultantId = searchParams.get('consultant_id')
+
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [consultants, setConsultants] = useState<Consultant[]>([])
@@ -22,7 +25,7 @@ export default function NewResidentPage() {
   const [searchConsultant, setSearchConsultant] = useState('')
 
   const [form, setForm] = useState({
-    consultant_id: '',
+    consultant_id: preselectedConsultantId ?? '',
     entry_count: '1回目',
     entry_date: new Date().toISOString().split('T')[0],
     exit_date: '',
@@ -101,7 +104,11 @@ export default function NewResidentPage() {
         .update({ status: '入寮済' })
         .eq('id', parseInt(form.consultant_id))
 
-      router.push('/')
+      if (preselectedConsultantId) {
+        router.push(`/consultants/${preselectedConsultantId}`)
+      } else {
+        router.push('/')
+      }
       router.refresh()
     } catch (e) {
       setError(`予期せぬエラー: ${e}`)
@@ -127,23 +134,30 @@ export default function NewResidentPage() {
     return parts.join(' ') || `ID: ${c.id}`
   }
 
+  const preselectedConsultant = preselectedConsultantId
+    ? consultants.find((c) => c.id === parseInt(preselectedConsultantId))
+    : null
+
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">← ホーム</Link>
+          <Link
+            href={preselectedConsultantId ? `/consultants/${preselectedConsultantId}` : '/'}
+            className="text-gray-500 hover:text-gray-700 text-sm"
+          >
+            ← 戻る
+          </Link>
           <h1 className="text-2xl font-bold text-gray-900">入寮者登録</h1>
         </div>
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">{error}</div>
         )}
 
-        <Field label="👤 相談者を選択" required>
+        <Field label="👤 相談者" required>
           {loading ? (
             <p className="text-gray-500 text-sm py-2">読み込み中...</p>
           ) : consultants.length === 0 ? (
@@ -151,6 +165,16 @@ export default function NewResidentPage() {
               相談者がまだ登録されていません。
               <Link href="/consultants/new" className="underline ml-1">先に新規問い合わせ登録</Link>
               をしてください。
+            </div>
+          ) : preselectedConsultant ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-900 font-medium">
+                👤 {consultantLabel(preselectedConsultant)}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                相談者ページから追加しているため、相談者は自動選択されています
+              </p>
+              <input type="hidden" name="consultant_id" value={form.consultant_id} />
             </div>
           ) : (
             <>
@@ -201,7 +225,10 @@ export default function NewResidentPage() {
           <button type="submit" disabled={submitting || consultants.length === 0} className="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
             {submitting ? '保存中...' : '💾 保存'}
           </button>
-          <Link href="/" className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 transition-colors text-center">
+          <Link
+            href={preselectedConsultantId ? `/consultants/${preselectedConsultantId}` : '/'}
+            className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-200 transition-colors text-center"
+          >
             キャンセル
           </Link>
         </div>
@@ -223,6 +250,18 @@ export default function NewResidentPage() {
         }
       `}</style>
     </main>
+  )
+}
+
+export default function NewResidentPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">読み込み中...</p>
+      </main>
+    }>
+      <NewResidentContent />
+    </Suspense>
   )
 }
 

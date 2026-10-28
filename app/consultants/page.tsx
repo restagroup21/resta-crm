@@ -44,6 +44,7 @@ export default function ConsultantsPage() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
+  const [nextActionOnly, setNextActionOnly] = useState<boolean>(false)
 
   useEffect(() => {
     fetchAll()
@@ -118,7 +119,9 @@ export default function ConsultantsPage() {
 
     const matchesStatus = !statusFilter || c.status === statusFilter
 
-    return matchesSearch && matchesStatus
+    const matchesNextAction = !nextActionOnly || !!c.next_action_type
+
+    return matchesSearch && matchesStatus && matchesNextAction
   })
 
   const statusColors: Record<string, string> = {
@@ -172,13 +175,19 @@ export default function ConsultantsPage() {
                 {s}
               </button>
             ))}
+            <button
+              onClick={() => setNextActionOnly(!nextActionOnly)}
+              className={`px-3 py-1 rounded-full text-sm ${nextActionOnly ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+            >
+              🗓 次回予定あり
+            </button>
           </div>
         </div>
 
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-600">
             📊 <span className="font-semibold">{filtered.length}</span>件
-            {search || statusFilter ? ` / 全${consultants.length}件` : ''}
+            {search || statusFilter || nextActionOnly ? ` / 全${consultants.length}件` : ''}
             <span className="ml-2 text-xs text-gray-400">(対応順)</span>
           </p>
           <Link href="/consultants/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
@@ -251,7 +260,7 @@ export default function ConsultantsPage() {
                     {c.inquiry_channel && (
                       <Tag>
                         📱 {c.inquiry_channel}
-                        {c.inquiry_channel === 'LINE' && c.line_name && ` (${c.line_name})`}
+                        {c.line_name && ` (${c.line_name})`}
                       </Tag>
                     )}
                     {c.phone && <Tag>📞 {c.phone}</Tag>}

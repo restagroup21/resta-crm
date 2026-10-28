@@ -130,9 +130,7 @@ export default function EditConsultantPage() {
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">{error}</div>
         )}
 
         <Field label="📅 受付日" required>
@@ -208,11 +206,9 @@ export default function EditConsultantPage() {
           </select>
         </Field>
 
-        {form.inquiry_channel === 'LINE' && (
-          <Field label="💬 LINE名">
-            <input type="text" name="line_name" value={form.line_name} onChange={handleChange} className="input" />
-          </Field>
-        )}
+        <Field label="💬 LINE名(任意)">
+          <input type="text" name="line_name" value={form.line_name} onChange={handleChange} placeholder="LINEでの表示名(連絡手段がLINE以外でも入力OK)" className="input" />
+        </Field>
 
         <Field label="📊 ステータス">
           <select name="status" value={form.status} onChange={handleChange} className="input">

@@ -148,6 +148,7 @@ export default function ConsultantDetailPage() {
     連絡待ち: 'bg-yellow-100 text-yellow-700',
     '電話・LINE予定': 'bg-blue-100 text-blue-700',
     面談予定: 'bg-orange-100 text-orange-700',
+    返信なし: 'bg-red-100 text-red-700',
     辞退: 'bg-gray-200 text-gray-600',
     その他: 'bg-gray-100 text-gray-700',
   }
@@ -208,7 +209,10 @@ export default function ConsultantDetailPage() {
             <InfoItem label="📞 電話番号" value={consultant.phone} />
             <InfoItem label="🗾 都道府県" value={consultant.prefecture} />
             <InfoItem label="📢 どこで知ったか" value={consultant.inquiry_route} />
-            <InfoItem label="📱 連絡手段" value={consultant.inquiry_channel ? `${consultant.inquiry_channel}${consultant.line_name ? ` (${consultant.line_name})` : ''}` : null} />
+            <InfoItem label="📱 連絡手段" value={consultant.inquiry_channel} />
+            {consultant.line_name && (
+              <InfoItem label="💬 LINE名" value={consultant.line_name} />
+            )}
           </dl>
 
           {consultant.next_action_type && (
@@ -231,9 +235,7 @@ export default function ConsultantDetailPage() {
           {consultant.notes && (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <p className="text-xs text-gray-500 mb-1">📝 内容</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                {consultant.notes}
-              </p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{consultant.notes}</p>
             </div>
           )}
 
@@ -252,7 +254,12 @@ export default function ConsultantDetailPage() {
             <h3 className="text-lg font-semibold text-gray-900">
               📝 対応履歴 ({contactLogs.length}件)
             </h3>
-            <Link href="/contact-logs/new" className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded">+ 追加</Link>
+            <Link
+              href={`/contact-logs/new?consultant_id=${id}`}
+              className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded"
+            >
+              + 追加
+            </Link>
           </div>
 
           {contactLogs.length === 0 ? (
@@ -293,7 +300,12 @@ export default function ConsultantDetailPage() {
             <h3 className="text-lg font-semibold text-gray-900">
               🏠 入寮情報 ({residents.length}件)
             </h3>
-            <Link href="/residents/new" className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded">+ 追加</Link>
+            <Link
+              href={`/residents/new?consultant_id=${id}`}
+              className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded"
+            >
+              + 追加
+            </Link>
           </div>
 
           {residents.length === 0 ? (

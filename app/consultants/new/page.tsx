@@ -45,7 +45,6 @@ export default function NewConsultantPage() {
         Object.entries(form).map(([k, v]) => [k, v === '' ? null : v])
       )
 
-      // 1. 相談者を登録
       const { data: inserted, error: insertError } = await supabase
         .from('consultants')
         .insert([payload])
@@ -58,7 +57,6 @@ export default function NewConsultantPage() {
         return
       }
 
-      // 2. 対応履歴に「初回問い合わせ」を自動追加
       if (inserted?.id) {
         await supabase
           .from('contact_logs')
@@ -82,18 +80,14 @@ export default function NewConsultantPage() {
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center gap-4">
-          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
-            ← ホーム
-          </Link>
+          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">← ホーム</Link>
           <h1 className="text-2xl font-bold text-gray-900">新規問い合わせ登録</h1>
         </div>
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">{error}</div>
         )}
 
         <Field label="📅 受付日" required>
@@ -185,11 +179,9 @@ export default function NewConsultantPage() {
           </select>
         </Field>
 
-        {form.inquiry_channel === 'LINE' && (
-          <Field label="💬 LINE名">
-            <input type="text" name="line_name" value={form.line_name} onChange={handleChange} placeholder="LINEでの表示名" className="input" />
-          </Field>
-        )}
+        <Field label="💬 LINE名(任意)">
+          <input type="text" name="line_name" value={form.line_name} onChange={handleChange} placeholder="LINEでの表示名(連絡手段がLINE以外でも入力OK)" className="input" />
+        </Field>
 
         <Field label="📊 ステータス">
           <select name="status" value={form.status} onChange={handleChange} className="input">
