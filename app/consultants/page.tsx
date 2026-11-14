@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -37,15 +38,20 @@ interface LatestContact {
   type: string | null
 }
 
-export default function ConsultantsPage() {
+function ConsultantsListContent() {
+  const searchParams = useSearchParams()
+  const initialInterviewed = searchParams.get('interviewed') === '1'
+
   const [consultants, setConsultants] = useState<Consultant[]>([])
   const [latestContacts, setLatestContacts] = useState<Record<number, LatestContact>>({})
+  const [interviewedIds, setInterviewedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [nextActionOnly, setNextActionOnly] = useState<boolean>(false)
   const [nextActionTypeFilter, setNextActionTypeFilter] = useState<string>('')
+  const [interviewedOnly, setInterviewedOnly] = useState<boolean>(initialInterviewed)
 
   useEffect(() => {
     fetchAll()
@@ -75,12 +81,18 @@ export default function ConsultantsPage() {
       }
 
       const latest: Record<number, LatestContact> = {}
+      const interviewSet = new Set<number>()
+      const interviewTypes = ['オンライン面談', '対面面談']
+
       ;(logsData ?? []).forEach((log: ContactLog) => {
         if (!latest[log.consultant_id]) {
           latest[log.consultant_id] = {
             date: log.contact_date,
             type: log.contact_type,
           }
+        }
+        if (log.contact_type && interviewTypes.includes(log.contact_type)) {
+          interviewSet.add(log.consultant_id)
         }
       })
 
@@ -103,6 +115,7 @@ export default function ConsultantsPage() {
 
       setConsultants(sorted)
       setLatestContacts(latest)
+      setInterviewedIds(interviewSet)
     } catch (e) {
       setError(`予期せぬエラー: ${e}`)
     } finally {
@@ -110,7 +123,6 @@ export default function ConsultantsPage() {
     }
   }
 
-  // 電話番号検索用: ハイフン・スペースを除去して比較
   const normalizePhone = (s: string) => s.replace(/[\s\-ー－]/g, '')
 
   const filtered = consultants.filter((c) => {
@@ -132,7 +144,9 @@ export default function ConsultantsPage() {
     const matchesNextActionType =
       !nextActionTypeFilter || c.next_action_type === nextActionTypeFilter
 
-    return matchesSearch && matchesStatus && matchesNextActionAny && matchesNextActionType
+    const matchesInterviewed = !interviewedOnly || interviewedIds.has(c.id)
+
+    return matchesSearch && matchesStatus && matchesNextActionAny && matchesNextActionType && matchesInterviewed
   })
 
   const statusColors: Record<string, string> = {
@@ -163,7 +177,6 @@ export default function ConsultantsPage() {
     その他: 'bg-gray-100 text-gray-700',
   }
 
-  // 「次回予定あり」をオフにしたら、種別フィルターもクリア
   const toggleNextActionOnly = () => {
     const newVal = !nextActionOnly
     setNextActionOnly(newVal)
@@ -173,6 +186,8 @@ export default function ConsultantsPage() {
   }
 
   const nextActionTypes = ['連絡待ち', '電話・LINE予定', '面談予定', '返信なし', '辞退', 'その他']
+
+  const interviewedCount = interviewedIds.size
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
@@ -203,9 +218,16 @@ export default function ConsultantsPage() {
             >
               🗓 次回予定あり {nextActionOnly ? '▼' : '▶'}
             </button>
+            <button
+              onClick={() => setInterviewedOnly(!interviewedOnly)}
+              className={`px-3 py-1 rounded-full text-sm ${interviewedOnly ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+              title={`面談(オンライン/対面)を実施した相談者: ${interviewedCount}人`}
+            >
+              🤝 面談経験あり
+            </button>
           </div>
 
-          {/* 次回予定の種別フィルター(「次回予定あり」オンの時だけ表示) */}
+          {/* 次回予定の種別フィルター */}
           {nextActionOnly && (
             <div className="pt-2 border-t border-gray-100">
               <p className="text-xs text-gray-500 mb-2">次回予定の種別で絞り込み:</p>
@@ -232,12 +254,21 @@ export default function ConsultantsPage() {
               </div>
             </div>
           )}
+
+          {/* 面談経験ありの時のヒント */}
+          {interviewedOnly && (
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-xs text-indigo-700">
+                💡 ステータスボタンと組み合わせると、面談後に<span className="font-semibold">入寮済・対応終了・対応中</span>になった人を絞り込めます
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-600">
             📊 <span className="font-semibold">{filtered.length}</span>件
-            {search || statusFilter || nextActionOnly || nextActionTypeFilter ? ` / 全${consultants.length}件` : ''}
+            {search || statusFilter || nextActionOnly || nextActionTypeFilter || interviewedOnly ? ` / 全${consultants.length}件` : ''}
             <span className="ml-2 text-xs text-gray-400">(対応順)</span>
           </p>
           <Link href="/consultants/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
@@ -259,6 +290,7 @@ export default function ConsultantsPage() {
           <div className="space-y-3">
             {filtered.map((c) => {
               const latest = latestContacts[c.id]
+              const hasInterview = interviewedIds.has(c.id)
               return (
                 <Link key={c.id} href={`/consultants/${c.id}`} className="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
@@ -269,11 +301,18 @@ export default function ConsultantsPage() {
                       </h3>
                       <p className="text-xs text-gray-500 mt-1">受付: {c.received_date}</p>
                     </div>
-                    {c.status && (
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[c.status] || 'bg-gray-100 text-gray-700'}`}>
-                        {c.status}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 flex-wrap justify-end">
+                      {hasInterview && (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                          🤝 面談済
+                        </span>
+                      )}
+                      {c.status && (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[c.status] || 'bg-gray-100 text-gray-700'}`}>
+                          {c.status}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
@@ -322,6 +361,18 @@ export default function ConsultantsPage() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function ConsultantsPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">読み込み中...</p>
+      </main>
+    }>
+      <ConsultantsListContent />
+    </Suspense>
   )
 }
 

@@ -4,6 +4,13 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+interface InterviewFunnel {
+  total: number       // 面談した人数(ユニーク)
+  entered: number     // うち入寮済
+  declined: number    // うち対応終了
+  ongoing: number     // うち対応中
+}
+
 interface Stats {
   totalConsultants: number
   totalContactLogs: number
@@ -18,7 +25,8 @@ interface Stats {
   inquiryChannelBreakdown: Record<string, number>
   prefectureTop: Array<{ name: string; count: number }>
   dormBreakdown: Record<string, number>
-  consultantDates: string[]  // received_dateのリスト
+  consultantDates: string[]
+  interviewFunnel: InterviewFunnel
 }
 
 type Period = '30days' | 'thisMonth' | '3months'
@@ -114,10 +122,26 @@ export default function DashboardPage() {
         dormBreakdown[d] = residents?.filter((r) => !r.exit_date && r.dorm === d).length ?? 0
       }
 
-      // 問い合わせ日のリスト
       const consultantDates = consultants
         ?.map((c) => c.received_date)
         .filter((d): d is string => !!d) ?? []
+
+      // 🆕 面談ファネル: 面談経験のある相談者のユニークIDを抽出
+      const interviewTypes = ['オンライン面談', '対面面談']
+      const interviewedIds = new Set<number>()
+      contactLogs?.forEach((log) => {
+        if (log.contact_type && interviewTypes.includes(log.contact_type)) {
+          interviewedIds.add(log.consultant_id)
+        }
+      })
+
+      const interviewedConsultants = consultants?.filter((c) => interviewedIds.has(c.id)) ?? []
+      const interviewFunnel: InterviewFunnel = {
+        total: interviewedConsultants.length,
+        entered: interviewedConsultants.filter((c) => c.status === '入寮済').length,
+        declined: interviewedConsultants.filter((c) => c.status === '対応終了').length,
+        ongoing: interviewedConsultants.filter((c) => c.status === '対応中').length,
+      }
 
       setStats({
         totalConsultants,
@@ -134,6 +158,7 @@ export default function DashboardPage() {
         prefectureTop,
         dormBreakdown,
         consultantDates,
+        interviewFunnel,
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -142,7 +167,6 @@ export default function DashboardPage() {
     }
   }
 
-  // 期間別の問い合わせ数集計
   const chartData = useMemo(() => {
     if (!stats) return { labels: [], values: [], max: 0, periodLabel: '' }
 
@@ -150,7 +174,6 @@ export default function DashboardPage() {
     const dateCount: Record<string, number> = {}
 
     if (period === '30days') {
-      // 直近30日間、日ごと
       const labels: string[] = []
       for (let i = 29; i >= 0; i--) {
         const d = new Date(now)
@@ -176,7 +199,6 @@ export default function DashboardPage() {
         periodLabel: '直近30日(日ごと)',
       }
     } else if (period === 'thisMonth') {
-      // 今月、日ごと
       const year = now.getFullYear()
       const month = now.getMonth() + 1
       const daysInMonth = new Date(year, month, 0).getDate()
@@ -204,7 +226,6 @@ export default function DashboardPage() {
         periodLabel: `${year}年${month}月(日ごと)`,
       }
     } else {
-      // 直近3ヶ月、月ごと
       const labels: string[] = []
       for (let i = 2; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -255,6 +276,11 @@ export default function DashboardPage() {
     )
   }
 
+  const funnel = stats.interviewFunnel
+  const funnelEnteredPct = funnel.total > 0 ? Math.round((funnel.entered / funnel.total) * 100) : 0
+  const funnelDeclinedPct = funnel.total > 0 ? Math.round((funnel.declined / funnel.total) * 100) : 0
+  const funnelOngoingPct = funnel.total > 0 ? Math.round((funnel.ongoing / funnel.total) * 100) : 0
+
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
       <header className="bg-white shadow-sm">
@@ -275,6 +301,87 @@ export default function DashboardPage() {
             <Kpi label="転換率" value={stats.conversionRate} unit="%" color="orange" />
             <Kpi label="平均在寮期間" value={stats.avgStayMonths} unit="ヶ月" color="pink" />
           </div>
+        </section>
+
+        {/* 🆕 面談ファネル */}
+        <section className="bg-white rounded-lg shadow-sm p-5">
+          <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+            <h3 className="text-base font-semibold text-gray-700">🤝 面談後の状況</h3>
+            <Link
+              href="/consultants?interviewed=1"
+              className="text-xs text-blue-600 hover:underline"
+            >
+              該当する人を一覧で見る →
+            </Link>
+          </div>
+
+          {funnel.total === 0 ? (
+            <p className="text-sm text-gray-500">まだ面談(オンライン/対面)の履歴がありません</p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600 mb-4">
+                これまでに面談(オンライン or 対面)した相談者:
+                <span className="font-semibold text-gray-900 ml-1">{funnel.total}人</span>
+              </p>
+
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <FunnelCard
+                  label="入寮済"
+                  count={funnel.entered}
+                  pct={funnelEnteredPct}
+                  color="green"
+                />
+                <FunnelCard
+                  label="対応終了"
+                  count={funnel.declined}
+                  pct={funnelDeclinedPct}
+                  color="gray"
+                />
+                <FunnelCard
+                  label="対応中"
+                  count={funnel.ongoing}
+                  pct={funnelOngoingPct}
+                  color="blue"
+                />
+              </div>
+
+              {/* 横棒グラフ */}
+              <div className="w-full h-6 rounded-full overflow-hidden flex bg-gray-100">
+                {funnel.entered > 0 && (
+                  <div
+                    style={{ width: `${funnelEnteredPct}%` }}
+                    className="bg-green-500 flex items-center justify-center text-[10px] text-white font-semibold"
+                    title={`入寮済 ${funnel.entered}人`}
+                  >
+                    {funnelEnteredPct >= 10 ? `${funnelEnteredPct}%` : ''}
+                  </div>
+                )}
+                {funnel.ongoing > 0 && (
+                  <div
+                    style={{ width: `${funnelOngoingPct}%` }}
+                    className="bg-blue-500 flex items-center justify-center text-[10px] text-white font-semibold"
+                    title={`対応中 ${funnel.ongoing}人`}
+                  >
+                    {funnelOngoingPct >= 10 ? `${funnelOngoingPct}%` : ''}
+                  </div>
+                )}
+                {funnel.declined > 0 && (
+                  <div
+                    style={{ width: `${funnelDeclinedPct}%` }}
+                    className="bg-gray-400 flex items-center justify-center text-[10px] text-white font-semibold"
+                    title={`対応終了 ${funnel.declined}人`}
+                  >
+                    {funnelDeclinedPct >= 10 ? `${funnelDeclinedPct}%` : ''}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-500 mt-3">
+                💡 面談後の入寮率は
+                <span className="font-semibold text-green-700 ml-1">{funnelEnteredPct}%</span>
+              </p>
+            </>
+          )}
         </section>
 
         {/* 問い合わせ数グラフ */}
@@ -308,7 +415,6 @@ export default function DashboardPage() {
             {chartData.periodLabel} - 合計 <span className="font-semibold text-gray-900">{total}</span>件
           </p>
 
-          {/* 棒グラフ(SVG) */}
           <BarChart labels={chartData.labels} values={chartData.values} max={chartData.max} />
         </section>
 
@@ -377,11 +483,26 @@ export default function DashboardPage() {
   )
 }
 
+function FunnelCard({ label, count, pct, color }: { label: string; count: number; pct: number; color: 'green' | 'gray' | 'blue' }) {
+  const colors: Record<string, string> = {
+    green: 'bg-green-50 text-green-700 border-green-200',
+    gray: 'bg-gray-50 text-gray-700 border-gray-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+  }
+  return (
+    <div className={`${colors[color]} border rounded-lg p-3 text-center`}>
+      <p className="text-xs font-medium mb-1">{label}</p>
+      <p className="text-2xl font-bold">{count}<span className="text-xs ml-1">人</span></p>
+      <p className="text-xs opacity-70">({pct}%)</p>
+    </div>
+  )
+}
+
 function BarChart({ labels, values, max }: { labels: string[]; values: number[]; max: number }) {
   const barCount = labels.length
   const chartHeight = 180
-  const chartWidth = Math.max(barCount * 24, 320)  // 棒ごとに24px確保
-  const barWidth = chartWidth / barCount - 4  // 棒の幅
+  const chartWidth = Math.max(barCount * 24, 320)
+  const barWidth = chartWidth / barCount - 4
   const padding = 4
 
   return (
@@ -391,7 +512,6 @@ function BarChart({ labels, values, max }: { labels: string[]; values: number[];
         height={chartHeight + 40}
         className="min-w-full"
       >
-        {/* 棒グラフ */}
         {values.map((v, i) => {
           const barHeight = max > 0 ? (v / max) * chartHeight : 0
           const x = i * (chartWidth / barCount) + padding / 2
@@ -399,7 +519,6 @@ function BarChart({ labels, values, max }: { labels: string[]; values: number[];
 
           return (
             <g key={i}>
-              {/* 棒 */}
               <rect
                 x={x}
                 y={y}
@@ -408,7 +527,6 @@ function BarChart({ labels, values, max }: { labels: string[]; values: number[];
                 fill={v > 0 ? '#3b82f6' : '#e5e7eb'}
                 rx="2"
               />
-              {/* 値ラベル(0以外のみ) */}
               {v > 0 && (
                 <text
                   x={x + barWidth / 2}
@@ -421,7 +539,6 @@ function BarChart({ labels, values, max }: { labels: string[]; values: number[];
                   {v}
                 </text>
               )}
-              {/* X軸ラベル */}
               <text
                 x={x + barWidth / 2}
                 y={chartHeight + 15}
@@ -434,7 +551,6 @@ function BarChart({ labels, values, max }: { labels: string[]; values: number[];
             </g>
           )
         })}
-        {/* X軸 */}
         <line
           x1={0}
           y1={chartHeight}
