@@ -110,13 +110,20 @@ export default function ConsultantsPage() {
     }
   }
 
+  // 電話番号検索用: ハイフン・スペースを除去して比較
+  const normalizePhone = (s: string) => s.replace(/[\s\-ー－]/g, '')
+
   const filtered = consultants.filter((c) => {
     const searchLower = search.toLowerCase()
+    const searchDigits = normalizePhone(search)
+    const phoneDigits = c.phone ? normalizePhone(c.phone) : ''
+
     const matchesSearch =
       !search ||
       c.name?.toLowerCase().includes(searchLower) ||
       c.guardian_name?.toLowerCase().includes(searchLower) ||
-      c.line_name?.toLowerCase().includes(searchLower)
+      c.line_name?.toLowerCase().includes(searchLower) ||
+      (searchDigits && phoneDigits.includes(searchDigits))
 
     const matchesStatus = !statusFilter || c.status === statusFilter
 
@@ -179,7 +186,7 @@ export default function ConsultantsPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-3">
           <div>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 氏名・LINE名で検索" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 氏名・LINE名・電話番号で検索" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600" />
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setStatusFilter('')} className={`px-3 py-1 rounded-full text-sm ${statusFilter === '' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
