@@ -24,6 +24,7 @@ interface Stats {
   inquiryRouteBreakdown: Record<string, number>
   inquiryChannelBreakdown: Record<string, number>
   prefectureTop: Array<{ name: string; count: number }>
+  prefectureNoAnswer: number
   dormBreakdown: Record<string, number>
   consultantDates: string[]
   interviewFunnel: InterviewFunnel
@@ -98,21 +99,27 @@ export default function DashboardPage() {
       for (const s of ['対応中', '入寮済', '対応終了']) {
         statusBreakdown[s] = consultants?.filter((c) => c.status === s).length ?? 0
       }
+      statusBreakdown['回答ナシ'] = consultants?.filter((c) => !c.status).length ?? 0
 
       const inquiryRouteBreakdown: Record<string, number> = {}
       for (const r of ['HP', '知人紹介', '行政紹介', 'その他']) {
         inquiryRouteBreakdown[r] = consultants?.filter((c) => c.inquiry_route === r).length ?? 0
       }
+      inquiryRouteBreakdown['回答ナシ'] = consultants?.filter((c) => !c.inquiry_route).length ?? 0
 
       const inquiryChannelBreakdown: Record<string, number> = {}
       for (const ch of ['LINE', '電話', 'メール', 'メッセージ', 'その他']) {
         inquiryChannelBreakdown[ch] = consultants?.filter((c) => c.inquiry_channel === ch).length ?? 0
       }
+      inquiryChannelBreakdown['回答ナシ'] = consultants?.filter((c) => !c.inquiry_channel).length ?? 0
 
       const prefCount: Record<string, number> = {}
+      let prefectureNoAnswer = 0
       consultants?.forEach((c) => {
         if (c.prefecture) {
           prefCount[c.prefecture] = (prefCount[c.prefecture] ?? 0) + 1
+        } else {
+          prefectureNoAnswer++
         }
       })
       const prefectureTop = Object.entries(prefCount)
@@ -159,6 +166,7 @@ export default function DashboardPage() {
         inquiryRouteBreakdown,
         inquiryChannelBreakdown,
         prefectureTop,
+        prefectureNoAnswer,
         dormBreakdown,
         consultantDates,
         interviewFunnel,
@@ -467,13 +475,16 @@ export default function DashboardPage() {
 
         <section className="bg-white rounded-lg shadow-sm p-5">
           <h3 className="text-base font-semibold text-gray-700 mb-3">🗾 都道府県別 上位5</h3>
-          {stats.prefectureTop.length === 0 ? (
+          {stats.prefectureTop.length === 0 && stats.prefectureNoAnswer === 0 ? (
             <p className="text-sm text-gray-500">データがありません</p>
           ) : (
             <div className="space-y-2">
               {stats.prefectureTop.map((p) => (
                 <BreakdownRow key={p.name} label={p.name} count={p.count} total={stats.totalConsultants} />
               ))}
+              {stats.prefectureNoAnswer > 0 && (
+                <BreakdownRow label="回答ナシ" count={stats.prefectureNoAnswer} total={stats.totalConsultants} />
+              )}
             </div>
           )}
         </section>
@@ -591,10 +602,11 @@ function Kpi({ label, value, unit, color }: { label: string; value: number; unit
 
 function BreakdownRow({ label, count, total }: { label: string; count: number; total: number }) {
   const percentage = total > 0 ? Math.round((count / total) * 100) : 0
+  const isNoAnswer = label === '回答ナシ'
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-gray-700">{label}</span>
-      <span className="font-medium text-gray-900">
+    <div className={`flex items-center justify-between text-sm ${isNoAnswer ? 'pt-2 border-t border-gray-100 mt-1' : ''}`}>
+      <span className={isNoAnswer ? 'text-gray-400 italic' : 'text-gray-700'}>{label}</span>
+      <span className={`font-medium ${isNoAnswer ? 'text-gray-400' : 'text-gray-900'}`}>
         {count}人 <span className="text-gray-400 text-xs">({percentage}%)</span>
       </span>
     </div>
