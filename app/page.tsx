@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 export default function Home() {
   const [stats, setStats] = useState({
     consultants: 0,
-    contactLogs: 0,
+    thisMonthContactLogs: 0,
     activeResidents: 0,
     loading: true,
   })
@@ -15,15 +15,26 @@ export default function Home() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        // 相談者数
+        // 相談者数(累計)
         const { count: consultantsCount } = await supabase
           .from('consultants')
           .select('*', { count: 'exact', head: true })
 
-        // 対応履歴数
-        const { count: contactLogsCount } = await supabase
+        // 今月の対応件数
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = now.getMonth() + 1
+        const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`
+        // 翌月1日
+        const nextMonth = month === 12 ? 1 : month + 1
+        const nextYear = month === 12 ? year + 1 : year
+        const startOfNextMonth = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
+
+        const { count: thisMonthContactLogsCount } = await supabase
           .from('contact_logs')
           .select('*', { count: 'exact', head: true })
+          .gte('contact_date', startOfMonth)
+          .lt('contact_date', startOfNextMonth)
 
         // 在寮者数(退寮日が入っていない人)
         const { count: activeResidentsCount } = await supabase
@@ -33,7 +44,7 @@ export default function Home() {
 
         setStats({
           consultants: consultantsCount ?? 0,
-          contactLogs: contactLogsCount ?? 0,
+          thisMonthContactLogs: thisMonthContactLogsCount ?? 0,
           activeResidents: activeResidentsCount ?? 0,
           loading: false,
         })
@@ -108,8 +119,8 @@ export default function Home() {
               loading={stats.loading}
             />
             <StatCard
-              label="累計対応件数"
-              value={stats.contactLogs}
+              label="今月の対応件数"
+              value={stats.thisMonthContactLogs}
               unit="件"
               color="green"
               loading={stats.loading}
