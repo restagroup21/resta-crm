@@ -13,7 +13,7 @@ interface InterviewFunnel {
 
 interface Stats {
   totalConsultants: number
-  totalContactLogs: number
+  thisMonthContactLogs: number
   totalResidents: number
   activeResidents: number
   conversionRate: number
@@ -60,7 +60,6 @@ export default function DashboardPage() {
       if (e3) throw new Error(e3.message)
 
       const totalConsultants = consultants?.length ?? 0
-      const totalContactLogs = contactLogs?.length ?? 0
       const totalResidents = residents?.length ?? 0
       const activeResidents = residents?.filter((r) => !r.exit_date).length ?? 0
 
@@ -89,6 +88,10 @@ export default function DashboardPage() {
 
       const thisMonthEntries = residents?.filter((r) =>
         r.entry_date?.startsWith(thisMonth)
+      ).length ?? 0
+
+      const thisMonthContactLogs = contactLogs?.filter((log) =>
+        log.contact_date?.startsWith(thisMonth)
       ).length ?? 0
 
       const statusBreakdown: Record<string, number> = {}
@@ -145,7 +148,7 @@ export default function DashboardPage() {
 
       setStats({
         totalConsultants,
-        totalContactLogs,
+        thisMonthContactLogs,
         totalResidents,
         activeResidents,
         conversionRate,
@@ -295,7 +298,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold text-gray-700 mb-3">🎯 主要KPI</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Kpi label="累計相談者" value={stats.totalConsultants} unit="人" color="blue" />
-            <Kpi label="累計対応件数" value={stats.totalContactLogs} unit="件" color="indigo" />
+            <Kpi label="今月の対応件数" value={stats.thisMonthContactLogs} unit="件" color="indigo" />
             <Kpi label="累計入寮" value={stats.totalResidents} unit="人" color="purple" />
             <Kpi label="現在の在寮" value={stats.activeResidents} unit="人" color="green" />
             <Kpi label="転換率" value={stats.conversionRate} unit="%" color="orange" />
