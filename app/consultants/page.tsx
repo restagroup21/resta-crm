@@ -38,9 +38,23 @@ interface LatestContact {
   type: string | null
 }
 
+type MissingField = '' | 'status' | 'route' | 'channel' | 'prefecture'
+
+const missingLabels: Record<MissingField, string> = {
+  '': '',
+  status: 'ステータス',
+  route: '流入経路(どこで知ったか)',
+  channel: '連絡手段',
+  prefecture: '都道府県',
+}
+
 function ConsultantsListContent() {
   const searchParams = useSearchParams()
   const initialInterviewed = searchParams.get('interviewed') === '1'
+  const initialMissingRaw = searchParams.get('missing') ?? ''
+  const initialMissing: MissingField = (['status', 'route', 'channel', 'prefecture'].includes(initialMissingRaw)
+    ? initialMissingRaw
+    : '') as MissingField
 
   const [consultants, setConsultants] = useState<Consultant[]>([])
   const [latestContacts, setLatestContacts] = useState<Record<number, LatestContact>>({})
@@ -52,6 +66,7 @@ function ConsultantsListContent() {
   const [nextActionOnly, setNextActionOnly] = useState<boolean>(false)
   const [nextActionTypeFilter, setNextActionTypeFilter] = useState<string>('')
   const [interviewedOnly, setInterviewedOnly] = useState<boolean>(initialInterviewed)
+  const [missingFilter, setMissingFilter] = useState<MissingField>(initialMissing)
 
   useEffect(() => {
     fetchAll()
@@ -146,7 +161,13 @@ function ConsultantsListContent() {
 
     const matchesInterviewed = !interviewedOnly || interviewedIds.has(c.id)
 
-    return matchesSearch && matchesStatus && matchesNextActionAny && matchesNextActionType && matchesInterviewed
+    let matchesMissing = true
+    if (missingFilter === 'status') matchesMissing = !c.status
+    else if (missingFilter === 'route') matchesMissing = !c.inquiry_route
+    else if (missingFilter === 'channel') matchesMissing = !c.inquiry_channel
+    else if (missingFilter === 'prefecture') matchesMissing = !c.prefecture
+
+    return matchesSearch && matchesStatus && matchesNextActionAny && matchesNextActionType && matchesInterviewed && matchesMissing
   })
 
   const statusColors: Record<string, string> = {
@@ -199,6 +220,29 @@ function ConsultantsListContent() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* 回答ナシフィルター表示 */}
+        {missingFilter && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⚠️</span>
+              <div>
+                <p className="text-sm font-medium text-amber-900">
+                  「{missingLabels[missingFilter]}」が未入力の人だけ表示中
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  💡 相談者をタップして編集画面から情報を追加できます
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setMissingFilter('')}
+              className="text-xs text-amber-700 hover:bg-amber-100 px-2 py-1 rounded"
+            >
+              ✕ 解除
+            </button>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-3">
           <div>
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 氏名・LINE名・電話番号で検索" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600" />
@@ -268,7 +312,7 @@ function ConsultantsListContent() {
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-600">
             📊 <span className="font-semibold">{filtered.length}</span>件
-            {search || statusFilter || nextActionOnly || nextActionTypeFilter || interviewedOnly ? ` / 全${consultants.length}件` : ''}
+            {search || statusFilter || nextActionOnly || nextActionTypeFilter || interviewedOnly || missingFilter ? ` / 全${consultants.length}件` : ''}
             <span className="ml-2 text-xs text-gray-400">(対応順)</span>
           </p>
           <Link href="/consultants/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">

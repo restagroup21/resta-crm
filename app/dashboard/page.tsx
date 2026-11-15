@@ -450,7 +450,13 @@ export default function DashboardPage() {
           <h3 className="text-base font-semibold text-gray-700 mb-3">📋 ステータス別内訳</h3>
           <div className="space-y-2">
             {Object.entries(stats.statusBreakdown).map(([status, count]) => (
-              <BreakdownRow key={status} label={status} count={count} total={stats.totalConsultants} />
+              <BreakdownRow
+                key={status}
+                label={status}
+                count={count}
+                total={stats.totalConsultants}
+                href={status === '回答ナシ' ? '/consultants?missing=status' : undefined}
+              />
             ))}
           </div>
         </section>
@@ -459,7 +465,13 @@ export default function DashboardPage() {
           <h3 className="text-base font-semibold text-gray-700 mb-3">📢 どこで知ったか</h3>
           <div className="space-y-2">
             {Object.entries(stats.inquiryRouteBreakdown).map(([route, count]) => (
-              <BreakdownRow key={route} label={route} count={count} total={stats.totalConsultants} />
+              <BreakdownRow
+                key={route}
+                label={route}
+                count={count}
+                total={stats.totalConsultants}
+                href={route === '回答ナシ' ? '/consultants?missing=route' : undefined}
+              />
             ))}
           </div>
         </section>
@@ -468,7 +480,13 @@ export default function DashboardPage() {
           <h3 className="text-base font-semibold text-gray-700 mb-3">📱 連絡手段</h3>
           <div className="space-y-2">
             {Object.entries(stats.inquiryChannelBreakdown).map(([channel, count]) => (
-              <BreakdownRow key={channel} label={channel} count={count} total={stats.totalConsultants} />
+              <BreakdownRow
+                key={channel}
+                label={channel}
+                count={count}
+                total={stats.totalConsultants}
+                href={channel === '回答ナシ' ? '/consultants?missing=channel' : undefined}
+              />
             ))}
           </div>
         </section>
@@ -483,7 +501,12 @@ export default function DashboardPage() {
                 <BreakdownRow key={p.name} label={p.name} count={p.count} total={stats.totalConsultants} />
               ))}
               {stats.prefectureNoAnswer > 0 && (
-                <BreakdownRow label="回答ナシ" count={stats.prefectureNoAnswer} total={stats.totalConsultants} />
+                <BreakdownRow
+                  label="回答ナシ"
+                  count={stats.prefectureNoAnswer}
+                  total={stats.totalConsultants}
+                  href="/consultants?missing=prefecture"
+                />
               )}
             </div>
           )}
@@ -600,15 +623,32 @@ function Kpi({ label, value, unit, color }: { label: string; value: number; unit
   )
 }
 
-function BreakdownRow({ label, count, total }: { label: string; count: number; total: number }) {
+function BreakdownRow({ label, count, total, href }: { label: string; count: number; total: number; href?: string }) {
   const percentage = total > 0 ? Math.round((count / total) * 100) : 0
   const isNoAnswer = label === '回答ナシ'
-  return (
-    <div className={`flex items-center justify-between text-sm ${isNoAnswer ? 'pt-2 border-t border-gray-100 mt-1' : ''}`}>
-      <span className={isNoAnswer ? 'text-gray-400 italic' : 'text-gray-700'}>{label}</span>
+
+  const content = (
+    <>
+      <span className={isNoAnswer ? 'text-gray-400 italic' : 'text-gray-700'}>
+        {label}
+        {href && isNoAnswer && count > 0 && <span className="text-blue-500 text-xs ml-1">→ 一覧</span>}
+      </span>
       <span className={`font-medium ${isNoAnswer ? 'text-gray-400' : 'text-gray-900'}`}>
         {count}人 <span className="text-gray-400 text-xs">({percentage}%)</span>
       </span>
-    </div>
+    </>
   )
+
+  const wrapperClass = `flex items-center justify-between text-sm ${isNoAnswer ? 'pt-2 border-t border-gray-100 mt-1' : ''}`
+
+  // href指定ありかつ回答ナシかつ1人以上 → クリック可能リンクに
+  if (href && isNoAnswer && count > 0) {
+    return (
+      <Link href={href} className={`${wrapperClass} hover:bg-blue-50 -mx-2 px-2 py-1 rounded transition-colors`}>
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className={wrapperClass}>{content}</div>
 }
