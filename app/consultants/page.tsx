@@ -193,6 +193,7 @@ function ConsultantsListContent() {
     連絡待ち: 'bg-yellow-100 text-yellow-700',
     '電話・LINE予定': 'bg-blue-100 text-blue-700',
     面談予定: 'bg-orange-100 text-orange-700',
+    入寮予定: 'bg-purple-100 text-purple-700',
     返信なし: 'bg-red-100 text-red-700',
     辞退: 'bg-gray-200 text-gray-600',
     その他: 'bg-gray-100 text-gray-700',
@@ -206,7 +207,7 @@ function ConsultantsListContent() {
     }
   }
 
-  const nextActionTypes = ['連絡待ち', '電話・LINE予定', '面談予定', '返信なし', '辞退', 'その他']
+  const nextActionTypes = ['連絡待ち', '電話・LINE予定', '面談予定', '入寮予定', '返信なし', '辞退', 'その他']
 
   const interviewedCount = interviewedIds.size
 

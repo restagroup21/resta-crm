@@ -201,6 +201,7 @@ export default function NewConsultantPage() {
             <option value="連絡待ち">連絡待ち</option>
             <option value="電話・LINE予定">電話・LINE予定</option>
             <option value="面談予定">面談予定</option>
+            <option value="入寮予定">入寮予定</option>
             <option value="返信なし">返信なし</option>
             <option value="辞退">辞退</option>
             <option value="その他">その他</option>
